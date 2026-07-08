@@ -241,13 +241,8 @@ struct Sidebar: View {
                     .font(.system(size: 30, weight: .bold))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(theme.accent)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Initiative Planner Pro")
-                        .font(.system(size: 16, weight: .bold))
-                    Text("Native macOS · Liquid Glass")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text("Initiative Planner Pro")
+                    .font(.system(size: 16, weight: .bold))
             }
             .padding(.bottom, 8)
 
@@ -287,14 +282,13 @@ struct Sidebar: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Version \(Bundle.main.appVersionString)")
-                Text(Bundle.main.copyrightString)
-            }
-            .font(.system(size: 10))
-            .foregroundStyle(.tertiary)
-            .padding(.top, 6)
-            .padding(.leading, 4)
+            // Nur die Version — der Copyright-Vermerk hat seinen macOS-üblichen
+            // Platz im Über-Dialog (aus der Info.plist).
+            Text("Version \(Bundle.main.appVersionString)")
+                .font(.system(size: 10))
+                .foregroundStyle(.tertiary)
+                .padding(.top, 6)
+                .padding(.leading, 4)
         }
         .padding(18)
         .frame(width: 270)
@@ -307,9 +301,6 @@ extension Bundle {
         let version = infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
         let build = infoDictionary?["CFBundleVersion"] as? String ?? ""
         return build.isEmpty ? version : "\(version) (\(build))"
-    }
-    var copyrightString: String {
-        infoDictionary?["NSHumanReadableCopyright"] as? String ?? ""
     }
 }
 
