@@ -1,11 +1,11 @@
 cask "initiative-planner-pro" do
-  version "0.8.8"
-  sha256 "82ca144e08af3a902305e195c8a65e98937c58254786462667a56e15a957d24d"
+  version "0.8.9"
+  sha256 "4e79db24732be038d0e84eb7a47139ae9bdd4d72751b881db93b0131044d4521"
 
   # Cramleo234 anpassen, sobald das Release-Repo existiert.
   url "https://github.com/Cramleo234/initiative-planner-pro/releases/download/v#{version}/InitiativePlannerPro-#{version}.dmg"
   name "Initiative Planner Pro"
-  desc "D&D-Initiative-Tracker für Spielleiter — Kampf, Monsterdatenbank, Status, Player View"
+  desc "Initiative-Tracker für Tabletop-Rollenspiele (5e-kompatibel) — Kampf, Monsterdatenbank, Status, Player View"
   homepage "https://github.com/Cramleo234/initiative-planner-pro"
 
   depends_on macos: :sequoia

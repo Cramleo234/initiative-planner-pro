@@ -63,7 +63,7 @@ struct PlannerTheme: Identifiable, Equatable, Sendable {
     ///  Weiß — cleanes, helles Theme ganz im Apple-Design: neutraler Grund,
     /// System-Blau als Akzent, weiße Karten mit Hairline-Rändern.
     static let pure = PlannerTheme(
-        id: "pure", name: "Weiß", icon: "apple.logo", isDark: false,
+        id: "pure", name: "Weiß", icon: "sun.max.fill", isDark: false,
         bgStops: [Color(hex: 0xf8f8fa), Color(hex: 0xf2f2f6), Color(hex: 0xebebf0)],
         glows: [Glow(color: Color(hex: 0x007aff, alpha: 0.05), center: .init(x: 0.2, y: -0.05), radius: 600),
                 Glow(color: Color(hex: 0x5e5ce6, alpha: 0.04), center: .init(x: 0.9, y: 1.05), radius: 560)],
