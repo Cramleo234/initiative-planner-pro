@@ -60,7 +60,7 @@ struct PlannerTheme: Identifiable, Equatable, Sendable {
         accentContrast: Color(hex: 0xfff8e7), tertiary: Color(hex: 0x6744a5),
         cardTint: Color(hex: 0xfff9e5), cardBorder: Color(hex: 0x9e7c45, alpha: 0.5))
 
-    ///  Weiß — cleanes, helles Theme ganz im Apple-Design: neutraler Grund,
+    ///  Weiß — cleanes, helles Theme: neutraler Grund,
     /// System-Blau als Akzent, weiße Karten mit Hairline-Rändern.
     static let pure = PlannerTheme(
         id: "pure", name: "Weiß", icon: "sun.max.fill", isDark: false,
@@ -160,6 +160,17 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingStatusLibrary) { StatusLibraryView() }
         .sheet(item: $selectedStatusCreature) { creature in StatusPickerView(creature: creature) }
+        // Konzentrations-Erinnerung: erscheint automatisch, wenn ein konzentrierender
+        // Kämpfer Schaden erleidet (SG 10 oder halber Schaden — der höhere Wert).
+        .sheet(item: Binding(
+            get: { store.concentrationChecks.first },
+            set: { newValue in
+                if newValue == nil, let first = store.concentrationChecks.first {
+                    store.dismissConcentrationCheck(first)
+                }
+            })) { check in
+            ConcentrationCheckView(check: check)
+        }
         .overlay(alignment: .bottomTrailing) { ToastView() }
         .preferredColorScheme(store.theme.isDark ? .dark : .light)
         .toolbar {
@@ -571,9 +582,12 @@ struct CreatureCard: View {
     @State private var initiative = ""
     @State private var showStatblock = false
 
-    var activeStatuses: [StatusDefinition] {
-        creature.statuses.compactMap { instance in store.state.statuses.first { $0.id == instance.id } }
-            .sorted { $0.priority > $1.priority }
+    var activeStatuses: [(def: StatusDefinition, instance: StatusInstance)] {
+        creature.statuses
+            .compactMap { instance in
+                store.state.statuses.first { $0.id == instance.id }.map { (def: $0, instance: instance) }
+            }
+            .sorted { $0.def.priority > $1.def.priority }
     }
 
     /// Statblock des zugehörigen Datenbank-Monsters (falls von dort hinzugefügt).
@@ -652,14 +666,15 @@ struct CreatureCard: View {
                     Label("Status", systemImage: "sparkles")
                 }
                 .tint(theme.tertiary)
-                ForEach(activeStatuses.prefix(5)) { status in
+                ForEach(activeStatuses.prefix(5), id: \.def.id) { entry in
+                    let status = entry.def
                     let color = statusCategoryColor(status.category, polarity: status.polarity)
                     // Chip klicken = Status entfernen (per ⌘Z rückholbar); Rechtsklick zeigt Regeln.
                     Button {
                         store.toggleStatus(status.id, for: creature.id)
                     } label: {
                         HStack(spacing: 3) {
-                            Text(status.short)
+                            Text(status.short + (entry.instance.duration.map { " · \($0)R" } ?? ""))
                                 .font(.system(size: 10.5, weight: .bold))
                             Image(systemName: "xmark")
                                 .font(.system(size: 7, weight: .bold))
@@ -686,9 +701,13 @@ struct CreatureCard: View {
                 }
             }
             if creature.isDefeated {
-                Text("💀 Auf 0 HP — bleibt zur Kontrolle im Encounter.")
-                    .font(.caption)
-                    .foregroundStyle(theme.isDark ? Color(hex: 0xff8a70) : Color(hex: 0x9c2a1c))
+                if creature.kind == .player {
+                    DeathSaveView(creature: creature)
+                } else {
+                    Text("💀 Auf 0 HP — bleibt zur Kontrolle im Encounter.")
+                        .font(.caption)
+                        .foregroundStyle(theme.isDark ? Color(hex: 0xff8a70) : Color(hex: 0x9c2a1c))
+                }
             }
 
             // Aktionen & Fähigkeiten aus der Monsterdatenbank — direkt im Kampf aufklappbar
@@ -716,6 +735,141 @@ struct CreatureCard: View {
         .shadow(color: isActive ? theme.accent.opacity(0.25) : .clear, radius: 16, y: 6)
         .opacity(creature.isDefeated ? 0.75 : 1)
         .onAppear { initiative = creature.currentInitiative.map(String.init) ?? "" }
+    }
+}
+
+/// Dialog für fällige Konzentrationsproben nach erlittenem Schaden.
+struct ConcentrationCheckView: View {
+    @EnvironmentObject private var store: PlannerStore
+    let check: PlannerStore.ConcentrationCheck
+
+    var body: some View {
+        let theme = store.theme
+        VStack(spacing: 14) {
+            Image(systemName: "brain.head.profile")
+                .font(.system(size: 34))
+                .foregroundStyle(theme.tertiary)
+            Text("Konzentrationsprobe!")
+                .font(.system(size: 19, weight: .heavy, design: .rounded))
+            Text("\(check.creatureName) hat \(check.damage) Schaden erlitten und konzentriert sich auf einen Effekt.")
+                .font(.system(size: 12.5))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            VStack(spacing: 3) {
+                Text("KONSTITUTIONSRETTUNGSWURF")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.6)
+                    .foregroundStyle(.secondary)
+                Text("SG \(check.dc)")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundStyle(theme.accent)
+                Text(check.dc > 10
+                     ? "Halber Schaden (\(check.damage) ÷ 2 = \(check.dc)) — höher als SG 10"
+                     : "SG 10 — höher als der halbe Schaden (\(check.damage) ÷ 2)")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(theme.accent.opacity(0.4), lineWidth: 1))
+
+            HStack(spacing: 8) {
+                Button {
+                    store.resolveConcentrationCheck(check, passed: false)
+                } label: {
+                    Label("Verpatzt — Konzentration endet", systemImage: "xmark")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(Color(hex: 0xd9503c))
+
+                Button {
+                    store.resolveConcentrationCheck(check, passed: true)
+                } label: {
+                    Label("Bestanden", systemImage: "checkmark")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color(hex: 0x4fac78))
+                .keyboardShortcut(.defaultAction)
+            }
+            Button("Ignorieren") { store.dismissConcentrationCheck(check) }
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(22)
+        .frame(width: 400)
+        .background(LiquidBackground(theme: theme))
+    }
+}
+
+/// Todesrettungswürfe bei 0 TP: je drei abhakbare Slots für Erfolge und Misserfolge.
+struct DeathSaveView: View {
+    @EnvironmentObject private var store: PlannerStore
+    var creature: Creature
+
+    var body: some View {
+        let successes = creature.deathSaveSuccesses ?? 0
+        let failures = creature.deathSaveFailures ?? 0
+        let dead = failures >= 3
+        let stable = successes >= 3
+        let green = Color(hex: 0x4fac78)
+        let red = Color(hex: 0xd9503c)
+
+        VStack(alignment: .leading, spacing: 6) {
+            Text("TODESRETTUNGSWÜRFE")
+                .font(.system(size: 9, weight: .bold))
+                .tracking(1.3)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 16) {
+                slotRow(label: "Erfolge", count: successes, color: green) { newValue in
+                    store.setDeathSaves(creature.id, successes: newValue, failures: failures)
+                }
+                slotRow(label: "Misserfolge", count: failures, color: red) { newValue in
+                    store.setDeathSaves(creature.id, successes: successes, failures: newValue)
+                }
+                Spacer()
+                if dead {
+                    Text("💀 Gestorben")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(red)
+                } else if stable {
+                    Text("Stabilisiert")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(green)
+                }
+            }
+        }
+        .padding(9)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(red.opacity(0.08), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+            .strokeBorder(red.opacity(0.35), lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private func slotRow(label: String, count: Int, color: Color, onChange: @escaping (Int) -> Void) -> some View {
+        HStack(spacing: 5) {
+            Text(label)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(.secondary)
+            ForEach(1...3, id: \.self) { slot in
+                Button {
+                    // Klick auf gefüllten Slot nimmt ihn zurück, sonst bis hierhin füllen.
+                    onChange(count >= slot ? slot - 1 : slot)
+                } label: {
+                    Image(systemName: count >= slot ? "circle.fill" : "circle")
+                        .font(.system(size: 13))
+                        .foregroundStyle(count >= slot ? color : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help(count >= slot ? "Zurücknehmen" : "\(label): \(slot). abhaken")
+            }
+        }
     }
 }
 
@@ -1530,21 +1684,22 @@ struct StatusPickerView: View {
                     .keyboardShortcut(.defaultAction)
             }
 
-            // Aktive Stati immer oben — Klick entfernt direkt.
+            // Aktive Stati immer oben — Klick entfernt direkt, Dauer wird angezeigt.
             if !active.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("AKTIV")
                         .font(.system(size: 9.5, weight: .bold))
                         .tracking(1.4)
                         .foregroundStyle(theme.accent)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 6)], spacing: 6) {
-                        ForEach(active, id: \.id) { status in
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 6)], spacing: 6) {
+                        ForEach(active, id: \.def.id) { entry in
+                            let status = entry.def
                             let color = statusCategoryColor(status.category, polarity: status.polarity)
                             Button {
                                 store.toggleStatus(status.id, for: creature.id)
                             } label: {
                                 HStack(spacing: 5) {
-                                    Text(status.label)
+                                    Text(status.label + (entry.instance.duration.map { " · \($0)R" } ?? ""))
                                         .font(.system(size: 11, weight: .bold))
                                         .lineLimit(1)
                                     Spacer(minLength: 0)
@@ -1586,10 +1741,12 @@ struct StatusPickerView: View {
         store.state.allCreatures.first { $0.id == creature.id } ?? creature
     }
 
-    private var activeDefs: [StatusDefinition] {
+    private var activeDefs: [(def: StatusDefinition, instance: StatusInstance)] {
         liveCreature.statuses
-            .compactMap { instance in store.state.statuses.first { $0.id == instance.id } }
-            .sorted { $0.priority > $1.priority }
+            .compactMap { instance in
+                store.state.statuses.first { $0.id == instance.id }.map { (def: $0, instance: instance) }
+            }
+            .sorted { $0.def.priority > $1.def.priority }
     }
 
     @ViewBuilder
@@ -1612,7 +1769,13 @@ struct StatusPickerView: View {
                 EmptyState(text: "Keine Treffer.")
             }
             ForEach(items, id: \.id) { status in
-                StatusPickerRow(status: status, active: liveCreature.statuses.contains { $0.id == status.id }) {
+                let instance = liveCreature.statuses.first { $0.id == status.id }
+                StatusPickerRow(status: status,
+                                active: instance != nil,
+                                duration: instance?.duration,
+                                onDurationChange: instance == nil ? nil : { newDuration in
+                                    store.setStatusDuration(creature.id, statusID: status.id, duration: newDuration)
+                                }) {
                     store.toggleStatus(status.id, for: creature.id)
                 }
             }
@@ -1625,6 +1788,8 @@ struct StatusPickerRow: View {
     @EnvironmentObject private var store: PlannerStore
     let status: StatusDefinition
     let active: Bool
+    var duration: Int? = nil
+    var onDurationChange: ((Int?) -> Void)? = nil
     let action: () -> Void
 
     var body: some View {
@@ -1648,6 +1813,25 @@ struct StatusPickerRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+
+            // Dauer in Runden — zählt beim Zugwechsel automatisch herunter.
+            if active, let onDurationChange {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                    Stepper(value: Binding(
+                        get: { duration ?? 0 },
+                        set: { newValue in onDurationChange(newValue <= 0 ? nil : newValue) }
+                    ), in: 0...99) {
+                        Text(duration.map { "Dauer: \($0) Runde\($0 == 1 ? "" : "n")" } ?? "Dauer: unbegrenzt")
+                            .font(.system(size: 10.5, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .controlSize(.mini)
+                }
+                .help("Zählt bei jedem Zug dieses Kämpfers herunter; bei 0 endet der Status automatisch.")
+            }
 
             // … die Regeln klappen separat auf, ohne den Status umzuschalten.
             if !status.effects.isEmpty {
@@ -1963,6 +2147,11 @@ struct PlayerViewWindow: View {
                 Text(active.kind == .player ? "Spielercharakter" : "Gegner")
                     .font(.system(size: 12.5, weight: .semibold))
                     .foregroundStyle(.secondary)
+                if active.kind == .player && active.maxHitPoints > 0 {
+                    HPBarView(creature: active, height: 5)
+                        .frame(width: 150)
+                        .padding(.top, 2)
+                }
                 if list.count > 1 {
                     let next = list[(activeIndex + 1) % list.count]
                     HStack(spacing: 6) {
@@ -2100,6 +2289,13 @@ struct RingToken: View {
                 .lineLimit(1)
                 .frame(maxWidth: 104)
                 .shadow(color: theme.isDark ? .black.opacity(0.5) : .clear, radius: 4)
+
+            // HP-Balken nur für Spielercharaktere — und nur, wenn HP eingetragen sind.
+            // Monster-HP bleiben in der Spieleransicht bewusst verborgen.
+            if creature.kind == .player && creature.maxHitPoints > 0 {
+                HPBarView(creature: creature, height: 4)
+                    .frame(width: 56)
+            }
 
             if isNext {
                 Text("NÄCHSTER")

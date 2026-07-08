@@ -151,6 +151,71 @@ final class MonsterImporterTests: XCTestCase {
 }
 
 @MainActor
+final class CombatLogicTests: XCTestCase {
+    private func makeStore() -> PlannerStore {
+        PlannerStore(fileURL: FileManager.default.temporaryDirectory.appendingPathComponent("combat_test_\(UUID().uuidString).json"), load: false)
+    }
+
+    func testStatusDurationTicksDownAndEnds() {
+        let store = makeStore()
+        store.addCreature(name: "Held", kind: .player, armorClass: 10, hpExpression: "10", initiativeBonus: 0, initiative: 10)
+        store.addCreature(name: "Ork", kind: .monster, armorClass: 10, hpExpression: "10", initiativeBonus: 0, initiative: 5)
+        let heldID = store.state.players[0].id
+        store.toggleStatus("poisoned", for: heldID)
+        store.setStatusDuration(heldID, statusID: "poisoned", duration: 1)
+        XCTAssertEqual(store.state.players[0].statuses.first { $0.id == "poisoned" }?.duration, 1)
+        // Held ist aktiv (höchste Initiative) → Zugwechsel tickt seine Dauer auf 0 → Status endet
+        store.nextTurn()
+        XCTAssertFalse(store.state.players[0].statuses.contains { $0.id == "poisoned" })
+    }
+
+    func testThreeFailedDeathSavesMarkDead() {
+        let store = makeStore()
+        store.addCreature(name: "Held", kind: .player, armorClass: 10, hpExpression: "10", initiativeBonus: 0, initiative: nil)
+        let id = store.state.players[0].id
+        store.setDeathSaves(id, successes: 0, failures: 3)
+        XCTAssertEqual(store.state.players[0].deathSaveFailures, 3)
+        XCTAssertTrue(store.state.players[0].statuses.contains { $0.id == "dead" })
+    }
+
+    func testThreeSuccessfulDeathSavesMarkStableAndHealingResets() {
+        let store = makeStore()
+        store.addCreature(name: "Held", kind: .player, armorClass: 10, hpExpression: "10", initiativeBonus: 0, initiative: nil)
+        let id = store.state.players[0].id
+        store.applyDamage(id, expression: "10")
+        store.setDeathSaves(id, successes: 3, failures: 1)
+        XCTAssertTrue(store.state.players[0].statuses.contains { $0.id == "stable" })
+        // Heilung über 0 setzt Todesrettungswürfe und Stabil-Marker zurück
+        store.applyHealing(id, expression: "5")
+        XCTAssertNil(store.state.players[0].deathSaveSuccesses)
+        XCTAssertNil(store.state.players[0].deathSaveFailures)
+        XCTAssertFalse(store.state.players[0].statuses.contains { $0.id == "stable" })
+    }
+
+    func testDamageWhileConcentratingQueuesCheckWithCorrectDC() {
+        let store = makeStore()
+        store.addCreature(name: "Magier", kind: .player, armorClass: 10, hpExpression: "30", initiativeBonus: 0, initiative: nil)
+        let id = store.state.players[0].id
+        store.toggleStatus("concentration", for: id)
+        store.applyDamage(id, expression: "26")
+        XCTAssertEqual(store.concentrationChecks.count, 1)
+        XCTAssertEqual(store.concentrationChecks.first?.dc, 13, "SG = halber Schaden, wenn höher als 10")
+        store.resolveConcentrationCheck(store.concentrationChecks[0], passed: false)
+        XCTAssertFalse(store.state.players[0].statuses.contains { $0.id == "concentration" })
+        XCTAssertTrue(store.concentrationChecks.isEmpty)
+    }
+
+    func testSmallDamageConcentrationDCIsTen() {
+        let store = makeStore()
+        store.addCreature(name: "Magier", kind: .player, armorClass: 10, hpExpression: "30", initiativeBonus: 0, initiative: nil)
+        let id = store.state.players[0].id
+        store.toggleStatus("concentration", for: id)
+        store.applyDamage(id, expression: "7")
+        XCTAssertEqual(store.concentrationChecks.first?.dc, 10, "SG 10, wenn halber Schaden darunter liegt")
+    }
+}
+
+@MainActor
 final class FolderImportTests: XCTestCase {
     func testFolderImportRecursivelyImportsOnlyMatchingMarkdown() throws {
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("folder_import_\(UUID().uuidString)", isDirectory: true)

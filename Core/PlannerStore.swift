@@ -249,16 +249,33 @@ public final class PlannerStore: ObservableObject {
         applyHPChange(id, expression: expression, healing: true)
     }
 
+    /// Ausstehende Konzentrationsproben — die UI zeigt dafür einen Dialog.
+    public struct ConcentrationCheck: Identifiable, Equatable {
+        public var id = UUID()
+        public var creatureID: UUID
+        public var creatureName: String
+        public var damage: Int
+        public var dc: Int
+    }
+
+    @Published public var concentrationChecks: [ConcentrationCheck] = []
+
     private func applyHPChange(_ id: UUID, expression: String, healing: Bool) {
         guard let creature = state.allCreatures.first(where: { $0.id == id }) else { return }
+        let hadConcentration = creature.statuses.contains { $0.id == "concentration" }
         do {
             let amount = max(0, try DiceRoller.roll(expression).total)
             guard amount > 0 else { return }
             commit("\(creature.name): \(healing ? "\(amount) Heilung" : "\(amount) Schaden")", style: healing ? "success" : "warning") { state in
-                let hadConcentration = state.allCreatures.first(where: { $0.id == id })?.statuses.contains(where: { $0.id == "concentration" }) == true
                 mutateCreature(id, in: &state) { creature in
                     if healing {
                         creature.hitPoints = min(creature.maxHitPoints == 0 ? amount : creature.maxHitPoints, creature.hitPoints + amount)
+                        // Wieder über 0 TP: Todesrettungswürfe und Stabil-Marker zurücksetzen.
+                        if creature.hitPoints > 0 {
+                            creature.deathSaveSuccesses = nil
+                            creature.deathSaveFailures = nil
+                            creature.statuses.removeAll { $0.id == "stable" }
+                        }
                     } else {
                         var remaining = amount
                         let absorbed = min(creature.temporaryHitPoints, remaining)
@@ -269,10 +286,69 @@ public final class PlannerStore: ObservableObject {
                 }
                 if !healing && hadConcentration {
                     let dc = max(10, amount / 2)
-                    state.log.append(LogEntry(message: "\(creature.name): Konzentrationsprobe SG \(dc)", kind: "warning"))
+                    state.log.append(LogEntry(message: "\(creature.name): Konzentrationsprobe SG \(dc) fällig", kind: "warning"))
                 }
             }
+            // Erinnerung an die Konzentrationsprobe: SG 10 oder halber Schaden —
+            // je nachdem, was höher ist. Die UI zeigt dazu einen Dialog.
+            if !healing && hadConcentration {
+                concentrationChecks.append(ConcentrationCheck(creatureID: id, creatureName: creature.name,
+                                                              damage: amount, dc: max(10, amount / 2)))
+            }
         } catch { notice(error.localizedDescription, style: "error") }
+    }
+
+    public func resolveConcentrationCheck(_ check: ConcentrationCheck, passed: Bool) {
+        concentrationChecks.removeAll { $0.id == check.id }
+        guard let creature = state.allCreatures.first(where: { $0.id == check.creatureID }) else { return }
+        if passed {
+            commit(nil) { state in
+                state.log.append(LogEntry(message: "\(creature.name): Konzentrationsprobe SG \(check.dc) bestanden", kind: "info"))
+            }
+        } else {
+            commit(nil) { state in
+                mutateCreature(check.creatureID, in: &state) { $0.statuses.removeAll { $0.id == "concentration" } }
+                state.log.append(LogEntry(message: "\(creature.name): Konzentrationsprobe SG \(check.dc) verpatzt — Konzentration endet", kind: "warning"))
+            }
+        }
+    }
+
+    public func dismissConcentrationCheck(_ check: ConcentrationCheck) {
+        concentrationChecks.removeAll { $0.id == check.id }
+    }
+
+    /// Todesrettungswürfe setzen (0–3); drei Misserfolge markieren „Tot“,
+    /// drei Erfolge „Stabil“ — jeweils mit Log-Eintrag.
+    public func setDeathSaves(_ id: UUID, successes: Int, failures: Int) {
+        guard let creature = state.allCreatures.first(where: { $0.id == id }) else { return }
+        let s = max(0, min(3, successes))
+        let f = max(0, min(3, failures))
+        commit(nil) { state in
+            mutateCreature(id, in: &state) {
+                $0.deathSaveSuccesses = s
+                $0.deathSaveFailures = f
+            }
+            if f >= 3, !creature.statuses.contains(where: { $0.id == "dead" }) {
+                mutateCreature(id, in: &state) { $0.statuses.append(StatusInstance(id: "dead")) }
+                state.log.append(LogEntry(message: "\(creature.name) stirbt — dritter verpatzter Todesrettungswurf", kind: "warning"))
+            }
+            if s >= 3, !creature.statuses.contains(where: { $0.id == "stable" }) {
+                mutateCreature(id, in: &state) { $0.statuses.append(StatusInstance(id: "stable")) }
+                state.log.append(LogEntry(message: "\(creature.name) ist stabilisiert — drei erfolgreiche Todesrettungswürfe", kind: "success"))
+            }
+        }
+    }
+
+    /// Dauer eines aktiven Status in Runden setzen (nil = unbegrenzt).
+    /// Das Herunterzählen übernimmt der Zugwechsel (tickDurations).
+    public func setStatusDuration(_ creatureID: UUID, statusID: String, duration: Int?) {
+        commit(nil) { state in
+            mutateCreature(creatureID, in: &state) { creature in
+                if let idx = creature.statuses.firstIndex(where: { $0.id == statusID }) {
+                    creature.statuses[idx].duration = duration
+                }
+            }
+        }
     }
 
     public func setTemporaryHP(_ id: UUID, amount: Int) {

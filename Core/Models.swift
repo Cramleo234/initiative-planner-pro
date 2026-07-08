@@ -72,11 +72,14 @@ public struct Creature: Identifiable, Codable, Equatable {
     public var currentInitiative: Int?
     /// Manuelle Reihenfolge bei Initiative-Gleichstand (kleiner = früher dran).
     public var tieBreak: Int?
+    /// Todesrettungswürfe (nur relevant bei 0 TP): 0–3 Erfolge bzw. Misserfolge.
+    public var deathSaveSuccesses: Int?
+    public var deathSaveFailures: Int?
     public var statuses: [StatusInstance]
     public var notes: String
     public var sourceMonsterID: String?
 
-    public init(id: UUID = UUID(), name: String, kind: CreatureKind, armorClass: Int = 10, hitPoints: Int = 0, maxHitPoints: Int? = nil, temporaryHitPoints: Int = 0, initiativeBonus: Int = 0, currentInitiative: Int? = nil, tieBreak: Int? = nil, statuses: [StatusInstance] = [], notes: String = "", sourceMonsterID: String? = nil) {
+    public init(id: UUID = UUID(), name: String, kind: CreatureKind, armorClass: Int = 10, hitPoints: Int = 0, maxHitPoints: Int? = nil, temporaryHitPoints: Int = 0, initiativeBonus: Int = 0, currentInitiative: Int? = nil, tieBreak: Int? = nil, deathSaveSuccesses: Int? = nil, deathSaveFailures: Int? = nil, statuses: [StatusInstance] = [], notes: String = "", sourceMonsterID: String? = nil) {
         self.id = id
         self.name = name
         self.kind = kind
@@ -87,6 +90,8 @@ public struct Creature: Identifiable, Codable, Equatable {
         self.initiativeBonus = initiativeBonus
         self.currentInitiative = currentInitiative
         self.tieBreak = tieBreak
+        self.deathSaveSuccesses = deathSaveSuccesses
+        self.deathSaveFailures = deathSaveFailures
         self.statuses = statuses
         self.notes = notes
         self.sourceMonsterID = sourceMonsterID
