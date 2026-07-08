@@ -8,7 +8,7 @@ cask "initiative-planner-pro" do
   desc "D&D-Initiative-Tracker für Spielleiter — Kampf, Monsterdatenbank, Status, Player View"
   homepage "https://github.com/Cramleo234/initiative-planner-pro"
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
 
   app "Initiative Planner Pro.app"
 
