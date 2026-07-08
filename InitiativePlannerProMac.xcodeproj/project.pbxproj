@@ -1,0 +1,437 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		070D1D9E8305ADD771A3857B /* InitiativePlannerProMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 699B6B1BE5761C8FD5D7EF4A /* InitiativePlannerProMacApp.swift */; };
+		4B49E4D268FDCEE55E3E2FFF /* MonsterImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */; };
+		71237619EA6157ABA016F3F5 /* DiceRollerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */; };
+		8658FAB18C666B3A35102E12 /* PlannerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A586DC1D27820122C3226C2E /* PlannerStore.swift */; };
+		8768C62804E1A1D127DB19CB /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */; };
+		918003D40DA857A27E4BA880 /* MonsterImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */; };
+		AC95B3127477551A830D4E81 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 940234F0DD15E46A4A6EF932 /* Assets.xcassets */; };
+		D13F474298452A9C63DDEA10 /* DiceRoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96877E6A1FB045AAB660572 /* DiceRoller.swift */; };
+		DDC4C8B0AC5FC9A95E39638E /* DiceRoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96877E6A1FB045AAB660572 /* DiceRoller.swift */; };
+		E1778BFCA0ADA36C966ECB68 /* MonsterImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */; };
+		EA3163B20DC54F6B74E9E7B9 /* PlannerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A586DC1D27820122C3226C2E /* PlannerStore.swift */; };
+		EB0E880A6CF074931362862F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */; };
+		EDB97D306DA42487C14B7F76 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4386046E906E4A65AB0DD11 /* Views.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollerTests.swift; sourceTree = "<group>"; };
+		3F77A380C13AEF80C1601D72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		699B6B1BE5761C8FD5D7EF4A /* InitiativePlannerProMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitiativePlannerProMacApp.swift; sourceTree = "<group>"; };
+		730A8218124CC8A6BAA7BC1E /* InitiativePlannerProMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InitiativePlannerProMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84005D2C99590ACCC3DE8561 /* InitiativePlannerProMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InitiativePlannerProMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonsterImporter.swift; sourceTree = "<group>"; };
+		940234F0DD15E46A4A6EF932 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A586DC1D27820122C3226C2E /* PlannerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerStore.swift; sourceTree = "<group>"; };
+		BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonsterImporterTests.swift; sourceTree = "<group>"; };
+		C4386046E906E4A65AB0DD11 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views.swift; sourceTree = "<group>"; };
+		E96877E6A1FB045AAB660572 /* DiceRoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRoller.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		47B07BE29A3B33AA212D956B = {
+			isa = PBXGroup;
+			children = (
+				F35AA878B79C0DF9DB37FFF9 /* App */,
+				C7990A66289385C5B74AED46 /* Core */,
+				D6FCA0BC8BF821DE0ADB626D /* Tests */,
+				CCB5A326746E1E39D956BCB3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C7990A66289385C5B74AED46 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				E96877E6A1FB045AAB660572 /* DiceRoller.swift */,
+				47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */,
+				9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */,
+				A586DC1D27820122C3226C2E /* PlannerStore.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		CCB5A326746E1E39D956BCB3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				730A8218124CC8A6BAA7BC1E /* InitiativePlannerProMac.app */,
+				84005D2C99590ACCC3DE8561 /* InitiativePlannerProMacTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D6FCA0BC8BF821DE0ADB626D /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */,
+				BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		F35AA878B79C0DF9DB37FFF9 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				940234F0DD15E46A4A6EF932 /* Assets.xcassets */,
+				3F77A380C13AEF80C1601D72 /* Info.plist */,
+				699B6B1BE5761C8FD5D7EF4A /* InitiativePlannerProMacApp.swift */,
+				C4386046E906E4A65AB0DD11 /* Views.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2C6CE528BE3D06D5CCD359A3 /* InitiativePlannerProMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6AD364A627B6F21E055CBC0B /* Build configuration list for PBXNativeTarget "InitiativePlannerProMac" */;
+			buildPhases = (
+				1A5E1EDA7091F7A784623F54 /* Sources */,
+				5D437701E66E5EE55480F012 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = InitiativePlannerProMac;
+			packageProductDependencies = (
+			);
+			productName = InitiativePlannerProMac;
+			productReference = 730A8218124CC8A6BAA7BC1E /* InitiativePlannerProMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5653C79C41A865D0BC4A8522 /* InitiativePlannerProMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1F42C1D7642A5867CF9BD99 /* Build configuration list for PBXNativeTarget "InitiativePlannerProMacTests" */;
+			buildPhases = (
+				443A9034BBBA48A1174622A1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = InitiativePlannerProMacTests;
+			packageProductDependencies = (
+			);
+			productName = InitiativePlannerProMacTests;
+			productReference = 84005D2C99590ACCC3DE8561 /* InitiativePlannerProMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		71AE12310C03BA59DA5E72DC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					2C6CE528BE3D06D5CCD359A3 = {
+						ProvisioningStyle = Automatic;
+					};
+					5653C79C41A865D0BC4A8522 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = B86B6605F45E64D693A68F44 /* Build configuration list for PBXProject "InitiativePlannerProMac" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 47B07BE29A3B33AA212D956B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = CCB5A326746E1E39D956BCB3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2C6CE528BE3D06D5CCD359A3 /* InitiativePlannerProMac */,
+				5653C79C41A865D0BC4A8522 /* InitiativePlannerProMacTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5D437701E66E5EE55480F012 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC95B3127477551A830D4E81 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1A5E1EDA7091F7A784623F54 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D13F474298452A9C63DDEA10 /* DiceRoller.swift in Sources */,
+				070D1D9E8305ADD771A3857B /* InitiativePlannerProMacApp.swift in Sources */,
+				8768C62804E1A1D127DB19CB /* Models.swift in Sources */,
+				4B49E4D268FDCEE55E3E2FFF /* MonsterImporter.swift in Sources */,
+				8658FAB18C666B3A35102E12 /* PlannerStore.swift in Sources */,
+				EDB97D306DA42487C14B7F76 /* Views.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		443A9034BBBA48A1174622A1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DDC4C8B0AC5FC9A95E39638E /* DiceRoller.swift in Sources */,
+				71237619EA6157ABA016F3F5 /* DiceRollerTests.swift in Sources */,
+				EB0E880A6CF074931362862F /* Models.swift in Sources */,
+				E1778BFCA0ADA36C966ECB68 /* MonsterImporter.swift in Sources */,
+				918003D40DA857A27E4BA880 /* MonsterImporterTests.swift in Sources */,
+				EA3163B20DC54F6B74E9E7B9 /* PlannerStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0897E4C3DAE2A7C53968FDDB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Initiative Planner Pro";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Marc Erkens. Alle Rechte vorbehalten.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cramleo.InitiativePlannerProMac;
+				PRODUCT_NAME = "Initiative Planner Pro";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		126B2A66CEBE0F9B38F14BEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		1853ACA12211914C0C390A49 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		278C8E32003BDCA648A923B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cramleo.InitiativePlannerProMacTests;
+				SDKROOT = macosx;
+				TEST_HOST = "";
+			};
+			name = Release;
+		};
+		42AD5627EAB5134F0439276A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cramleo.InitiativePlannerProMacTests;
+				SDKROOT = macosx;
+				TEST_HOST = "";
+			};
+			name = Debug;
+		};
+		B63919A55C260F3D5C8411A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Initiative Planner Pro";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Marc Erkens. Alle Rechte vorbehalten.";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cramleo.InitiativePlannerProMac;
+				PRODUCT_NAME = "Initiative Planner Pro";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6AD364A627B6F21E055CBC0B /* Build configuration list for PBXNativeTarget "InitiativePlannerProMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0897E4C3DAE2A7C53968FDDB /* Debug */,
+				B63919A55C260F3D5C8411A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B86B6605F45E64D693A68F44 /* Build configuration list for PBXProject "InitiativePlannerProMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				126B2A66CEBE0F9B38F14BEE /* Debug */,
+				1853ACA12211914C0C390A49 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E1F42C1D7642A5867CF9BD99 /* Build configuration list for PBXNativeTarget "InitiativePlannerProMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				42AD5627EAB5134F0439276A /* Debug */,
+				278C8E32003BDCA648A923B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 71AE12310C03BA59DA5E72DC /* Project object */;
+}
