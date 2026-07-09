@@ -1980,14 +1980,25 @@ struct MonsterImportView: View {
             HStack {
                 Button("Beispiel einsetzen") { importText = """
 ---
-name: Schattenwolf
+name: Nebelweber
+typ: Monstrosität
 rk: 14
-tp: 45 (6d10+12)
-hg: 3
-initiative: +3
-typ: Bestie
-notizen: Rudeljäger, dunkle Höhlen
+tp: "39 (6W8+12)"
+hg: 2
+initiative: +2
+bewegungsrate: "9 m, Klettern 9 m"
+resistenzen: [Kälte]
 ---
+
+## Merkmale
+
+**Nebelhülle:** Der Nebelweber ist in dichtem Nebel leicht verschleiert und kann sich als Bonusaktion verstecken.
+
+## Aktionen
+
+**Biss:** *Nahkampfangriffswurf:* +4, Reichweite 1,5 m. *Treffer:* 7 (1W8+2) Stichschaden plus 3 (1W6) Kälteschaden.
+
+**Nebelfaden (Aufladung 5–6):** *Geschicklichkeitsrettungswurf:* SG 12; eine Kreatur im Abstand von bis zu 9 m. *Misserfolg:* Das Ziel ist festgesetzt (Flucht-SG 12).
 """ }
                 Spacer()
                 Button("Abbrechen") { dismiss() }
