@@ -25,7 +25,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>© 2026 Marc Erkens. Alle Rechte vorbehalten.</string>
+	<string>Copyright © 2026 Cramleo</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

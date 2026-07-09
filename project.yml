@@ -23,7 +23,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_CFBundleDisplayName: Initiative Planner Pro
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.games
-        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Marc Erkens. Alle Rechte vorbehalten."
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Cramleo"
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
         ENABLE_HARDENED_RUNTIME: YES
     info:
@@ -37,7 +37,7 @@ targets:
         LSMinimumSystemVersion: "15.0"
         LSApplicationCategoryType: public.app-category.games
         NSPrincipalClass: NSApplication
-        NSHumanReadableCopyright: "© 2026 Marc Erkens. Alle Rechte vorbehalten."
+        NSHumanReadableCopyright: "Copyright © 2026 Cramleo"
   InitiativePlannerProMacTests:
     type: bundle.unit-test
     platform: macOS

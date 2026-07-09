@@ -213,7 +213,7 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Initiative Planner Pro";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Marc Erkens. Alle Rechte vorbehalten.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Cramleo";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -389,7 +389,7 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Initiative Planner Pro";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Marc Erkens. Alle Rechte vorbehalten.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Cramleo";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

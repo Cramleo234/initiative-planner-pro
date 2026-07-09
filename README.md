@@ -108,4 +108,9 @@ Die Release-Routine (DMG, Homebrew-Tap) ist in [packaging/RELEASING.md](packagin
   (https://www.dndbeyond.com/srd).
 - **Eigenes Artwork.** App-Icon und Oberfläche sind Eigenentwicklungen.
 
-© 2026 Marc Erkens. Alle Rechte vorbehalten.
+Copyright © 2026 Cramleo
+
+
+## Lizenz
+
+Der eigene Quellcode dieses Projekts ist unter der [MIT-Lizenz](LICENSE) veröffentlicht. Externe SRD-Inhalte bleiben unter ihrer jeweiligen Lizenz, wie im Projekt vermerkt.
