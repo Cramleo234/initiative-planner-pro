@@ -16,7 +16,7 @@
     "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "npm run typecheck && npm run build:renderer && npm run build:electron",
-    "package:win": "npm run build && electron-builder --win zip --x64",
+    "package:win": "npm run build && electron-builder --win zip nsis --x64",
     "package:mac:test": "npm run build && electron-builder --mac dir --arm64",
     "verify": "npm run test && npm run build"
   },
@@ -54,8 +54,16 @@
     ],
     "win": {
       "icon": "../App/Assets.xcassets/AppIcon.appiconset/icon_512.png",
-      "target": ["zip"],
+      "target": ["zip", "nsis"],
       "artifactName": "InitiativePlannerPro-${version}-Windows-x64.${ext}"
+    },
+    "nsis": {
+      "artifactName": "InitiativePlannerPro-${version}-Windows-x64-Setup.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true
     },
     "mac": {
       "target": ["dir"],
