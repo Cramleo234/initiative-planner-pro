@@ -22,7 +22,7 @@ describe("renderer shell", () => {
     render(<App store={store} />);
 
     expect(screen.getByText("Initiative Planner Pro")).toBeInTheDocument();
-    expect(screen.getByText("Version 0.9.0")).toBeInTheDocument();
+    expect(screen.getByText("Version 0.9.1-beta.1")).toBeInTheDocument();
     for (const tab of ["Kampf", "Monster", "Encounters", "Status", "Protokoll"]) expect(screen.getByRole("button", { name: tab })).toBeInTheDocument();
 
     window.dispatchEvent(new CustomEvent("planner:add-player"));

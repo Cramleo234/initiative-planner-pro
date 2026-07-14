@@ -1,6 +1,6 @@
 {
   "name": "initiative-planner-pro-windows",
-  "version": "0.9.0",
+  "version": "0.9.1-beta.1",
   "description": "Initiative Planner Pro for Windows",
   "author": "Cramleo",
   "license": "MIT",
@@ -43,6 +43,7 @@
   "build": {
     "appId": "com.cramleo.InitiativePlannerPro",
     "productName": "Initiative Planner Pro",
+    "buildVersion": "0.9.1.0",
     "asar": true,
     "directories": {
       "output": "release"

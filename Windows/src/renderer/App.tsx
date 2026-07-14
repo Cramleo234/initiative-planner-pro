@@ -3,7 +3,7 @@ import type { Creature, CreatureKind, HPMode, MonsterTemplate, PlannerState, Sta
 import { challengeRatingValue, createEmptyStatBlock, PLANNER_THEMES, slugifyMonsterID } from "../domain/models";
 import { PlannerStore } from "../domain/store";
 
-const VERSION = "0.9.0";
+const VERSION = "0.9.1-beta.1";
 const tabs = ["Kampf", "Monster", "Encounters", "Status", "Protokoll"] as const;
 type Tab = (typeof tabs)[number];
 

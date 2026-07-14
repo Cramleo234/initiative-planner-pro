@@ -1,6 +1,6 @@
 # Initiative Planner Pro for Windows
 
-Electron/React implementation of Initiative Planner Pro 0.9.0 for Windows 10/11 x64.
+Electron/React implementation of Initiative Planner Pro 0.9.1-beta.1 for Windows 10/11 x64.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ Run `npm run dev`, then start the compiled Electron main process with `VITE_DEV_
 npm run package:win
 ```
 
-The unsigned ZIP and standalone NSIS installer are written to `release/InitiativePlannerPro-0.9.0-Windows-x64.zip` and `release/InitiativePlannerPro-0.9.0-Windows-x64-Setup.exe`. Signing is intentionally not part of this repository workflow.
+The unsigned ZIP and standalone NSIS installer are written to `release/InitiativePlannerPro-0.9.1-beta.1-Windows-x64.zip` and `release/InitiativePlannerPro-0.9.1-beta.1-Windows-x64-Setup.exe`. The product version is `0.9.1-beta.1`; Windows PE resources use the required numeric file version `0.9.1.0`. Signing is intentionally not part of this repository workflow.
 
 ## Data
 
