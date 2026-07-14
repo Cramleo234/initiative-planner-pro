@@ -1,0 +1,65 @@
+{
+  "name": "initiative-planner-pro-windows",
+  "version": "0.9.0",
+  "description": "Initiative Planner Pro for Windows",
+  "author": "Cramleo",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest run",
+    "test:e2e": "playwright test tests/electron-smoke.test.ts --workers=1",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b",
+    "build:renderer": "vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "npm run typecheck && npm run build:renderer && npm run build:electron",
+    "package:win": "npm run build && electron-builder --win zip --x64",
+    "package:mac:test": "npm run build && electron-builder --mac dir --arm64",
+    "verify": "npm run test && npm run build"
+  },
+  "dependencies": {
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "electron": "43.1.0",
+    "electron-builder": "26.15.3",
+    "jsdom": "29.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.1.4",
+    "vitest": "4.1.10"
+  },
+  "build": {
+    "appId": "com.cramleo.InitiativePlannerPro",
+    "productName": "Initiative Planner Pro",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "../App/Assets.xcassets/AppIcon.appiconset/icon_512.png",
+      "target": ["zip"],
+      "artifactName": "InitiativePlannerPro-${version}-Windows-x64.${ext}"
+    },
+    "mac": {
+      "target": ["dir"],
+      "category": "public.app-category.utilities"
+    }
+  }
+}

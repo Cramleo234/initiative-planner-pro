@@ -3,3 +3,10 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 .DS_Store
+Windows/node_modules/
+Windows/dist/
+Windows/dist-electron/
+Windows/release/
+Windows/test-results/
+Windows/playwright-report/
+Windows/*.tsbuildinfo

@@ -1,0 +1,667 @@
+{
+  "schemaVersion": 1,
+  "players": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "name": "Älva 🧙",
+      "kind": "player",
+      "armorClass": 17,
+      "hitPoints": 23,
+      "maxHitPoints": 31,
+      "temporaryHitPoints": 4,
+      "initiativeBonus": 3,
+      "currentInitiative": 18,
+      "tieBreak": 0,
+      "deathSaveSuccesses": 1,
+      "deathSaveFailures": 0,
+      "statuses": [
+        {
+          "id": "concentration",
+          "duration": 2,
+          "note": "Segen ✨"
+        }
+      ],
+      "notes": "Spielerin\nmit Umlaut",
+      "sourceMonsterID": null
+    }
+  ],
+  "monsters": [
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Nebelweber 1",
+      "kind": "monster",
+      "armorClass": 15,
+      "hitPoints": 35,
+      "maxHitPoints": 42,
+      "temporaryHitPoints": 0,
+      "initiativeBonus": 2,
+      "currentInitiative": 18,
+      "tieBreak": 1,
+      "deathSaveSuccesses": null,
+      "deathSaveFailures": null,
+      "statuses": [
+        {
+          "id": "poisoned",
+          "duration": null,
+          "note": ""
+        }
+      ],
+      "notes": "Aus Fixture",
+      "sourceMonsterID": "nebelweber"
+    }
+  ],
+  "round": 3,
+  "activeID": "11111111-1111-1111-1111-111111111111",
+  "monsterDatabase": [
+    {
+      "id": "nebelweber",
+      "name": "Nebelweber",
+      "armorClass": 15,
+      "hpAverage": 42,
+      "hpDice": "8d8+8",
+      "challengeRating": "4",
+      "initiativeBonus": 2,
+      "type": "Aberration",
+      "source": "Bestiarium ÄÖÜ.md",
+      "notes": "Dunkler Jäger",
+      "importedAt": "2026-01-02T03:04:05Z",
+      "statblock": {
+        "subtitle": "Weber zwischen Welten",
+        "size": "Groß",
+        "alignment": "Neutral böse",
+        "habitat": "Unterreich",
+        "speed": "9 m, Klettern 9 m",
+        "senses": "Dunkelsicht 36 m",
+        "languages": "Tiefensprache",
+        "skills": "Heimlichkeit +7",
+        "resistances": "Psychisch",
+        "immunities": "Bezaubert",
+        "vulnerabilities": "Gleißend",
+        "equipment": "Netz",
+        "xp": "1.100",
+        "proficiency": "+2",
+        "abilities": [
+          {
+            "label": "STÄ",
+            "score": 16,
+            "mod": "+3",
+            "save": "+3"
+          },
+          {
+            "label": "GES",
+            "score": 15,
+            "mod": "+2",
+            "save": "+4"
+          },
+          {
+            "label": "KON",
+            "score": 14,
+            "mod": "+2",
+            "save": "+4"
+          },
+          {
+            "label": "INT",
+            "score": 12,
+            "mod": "+1",
+            "save": "+1"
+          },
+          {
+            "label": "WEI",
+            "score": 13,
+            "mod": "+1",
+            "save": "+3"
+          },
+          {
+            "label": "CHA",
+            "score": 10,
+            "mod": "+0",
+            "save": "+0"
+          }
+        ],
+        "traits": [
+          {
+            "name": "Spinnenklettern",
+            "text": "Kann schwierige Flächen erklimmen."
+          }
+        ],
+        "actions": [
+          {
+            "name": "Biss",
+            "text": "Nahkampfangriff: 2W8+3 Giftschaden."
+          }
+        ],
+        "bonusActions": [
+          {
+            "name": "Schattenritt",
+            "text": "Teleportiert sich 9 m."
+          }
+        ],
+        "reactions": [
+          {
+            "name": "Parade",
+            "text": "+2 RK gegen einen Angriff."
+          }
+        ],
+        "legendaryActions": [
+          {
+            "name": "Netzwurf",
+            "text": "Ein Ziel wird festgesetzt."
+          }
+        ],
+        "legendaryIntro": "Der Nebelweber hat 2 legendäre Aktionen."
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "name": "Brücke über den Äther",
+      "savedAt": "2026-01-03T04:05:06Z",
+      "round": 2,
+      "activeID": "22222222-2222-2222-2222-222222222222",
+      "players": [
+        {
+          "id": "11111111-1111-1111-1111-111111111111",
+          "name": "Älva 🧙",
+          "kind": "player",
+          "armorClass": 17,
+          "hitPoints": 23,
+          "maxHitPoints": 31,
+          "temporaryHitPoints": 4,
+          "initiativeBonus": 3,
+          "currentInitiative": 18,
+          "tieBreak": 0,
+          "deathSaveSuccesses": 1,
+          "deathSaveFailures": 0,
+          "statuses": [
+            {
+              "id": "concentration",
+              "duration": 2,
+              "note": "Segen ✨"
+            }
+          ],
+          "notes": "Spielerin\nmit Umlaut",
+          "sourceMonsterID": null
+        }
+      ],
+      "monsters": [
+        {
+          "id": "22222222-2222-2222-2222-222222222222",
+          "name": "Nebelweber 1",
+          "kind": "monster",
+          "armorClass": 15,
+          "hitPoints": 35,
+          "maxHitPoints": 42,
+          "temporaryHitPoints": 0,
+          "initiativeBonus": 2,
+          "currentInitiative": 18,
+          "tieBreak": 1,
+          "deathSaveSuccesses": null,
+          "deathSaveFailures": null,
+          "statuses": [
+            {
+              "id": "poisoned",
+              "duration": null,
+              "note": ""
+            }
+          ],
+          "notes": "Aus Fixture",
+          "sourceMonsterID": "nebelweber"
+        }
+      ],
+      "log": [
+        {
+          "id": "44444444-4444-4444-4444-444444444444",
+          "date": "2026-01-03T04:05:06Z",
+          "message": "Encounter gespeichert",
+          "kind": "system"
+        }
+      ]
+    }
+  ],
+  "statuses": [
+    {
+      "id": "concentration",
+      "label": "Konzentration",
+      "short": "Konz",
+      "category": "concentration",
+      "priority": 10,
+      "polarity": "good",
+      "description": "Ein Zauber oder Effekt wird aktiv aufrechterhalten.",
+      "effects": [
+        "Bei Schaden: Konstitutionsrettungswurf, SG 10 oder halber erlittener Schaden, je nachdem was höher ist.",
+        "Endet, wenn du einen weiteren Konzentrationseffekt beginnst.",
+        "Endet, wenn du kampfunfähig wirst oder stirbst."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "dodging",
+      "label": "Ausweichend",
+      "short": "Ausw",
+      "category": "good",
+      "priority": 5,
+      "polarity": "good",
+      "description": "Die Kreatur nutzt die Ausweichen-Aktion.",
+      "effects": [
+        "Bis zum Beginn ihres nächsten Zugs sind Angriffswürfe gegen sie im Nachteil, sofern sie den Angreifer sehen kann.",
+        "Geschicklichkeitsrettungswürfe sind im Vorteil.",
+        "Der Vorteil endet, wenn sie kampfunfähig wird oder ihre Bewegungsrate 0 beträgt."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "resistant",
+      "label": "Resistent",
+      "short": "Res",
+      "category": "physical",
+      "priority": 2,
+      "polarity": "good",
+      "description": "Resistenz gegen eine Schadensart.",
+      "effects": [
+        "Schaden der angegebenen Art wird halbiert; pro Schadensinstanz nur einmal anwenden."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "immune",
+      "label": "Immun",
+      "short": "Imm",
+      "category": "physical",
+      "priority": 3,
+      "polarity": "good",
+      "description": "Immunität gegen eine Schadensart oder einen Zustand.",
+      "effects": [
+        "Die angegebene Schadensart oder der angegebene Zustand beeinflusst die Kreatur nicht."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "blessed",
+      "label": "Gesegnet",
+      "short": "Seg",
+      "category": "good",
+      "priority": 2,
+      "polarity": "good",
+      "description": "Hilfreicher Bonus, z. B. durch den Zauber Segnen.",
+      "effects": [
+        "Typische Erinnerung: +1W4 auf Angriffswürfe und Rettungswürfe, solange der Effekt gilt."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "inspired",
+      "label": "Inspiriert",
+      "short": "Ins",
+      "category": "good",
+      "priority": 1,
+      "polarity": "good",
+      "description": "Hat Inspiration, Bardeninspiration oder einen vergleichbaren Bonus.",
+      "effects": [
+        "Als Marker für einen später einsetzbaren Bonus gedacht; genaue Wirkung hängt von der Quelle ab."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "stable",
+      "label": "Stabil",
+      "short": "Stab",
+      "category": "good",
+      "priority": 2,
+      "polarity": "good",
+      "description": "Die Kreatur hat 0 Trefferpunkte, muss aber keine Todesrettungswürfe ablegen.",
+      "effects": [
+        "Marker für 0 HP ohne aktive Todesrettungswürfe.",
+        "Weitere Treffer/Heilung wie gewohnt nach Regelquelle behandeln."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "hidden",
+      "label": "Versteckt",
+      "short": "Vers",
+      "category": "movement",
+      "priority": 3,
+      "polarity": "good",
+      "description": "Die Kreatur hat sich erfolgreich versteckt.",
+      "effects": [
+        "Nach erfolgreichem Verstecken ist sie unsichtbar, solange sie versteckt bleibt.",
+        "Das Würfelergebnis dient als SG, um sie mit Wahrnehmung aufzuspüren.",
+        "Endet u. a., wenn sie lauter als ein Flüstern ist, aufgespürt wird, angreift oder einen Zauber mit Verbalkomponente wirkt."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "invisible",
+      "label": "Unsichtbar",
+      "short": "Uns",
+      "category": "movement",
+      "priority": 4,
+      "polarity": "good",
+      "description": "Die Kreatur ist nicht sichtbar, außer ein Effekt erlaubt es, sie trotzdem zu sehen.",
+      "effects": [
+        "Bei Initiative im Vorteil, wenn sie beim Auswürfeln unsichtbar ist.",
+        "Sie ist vor Effekten geschützt, die Sicht erfordern, sofern der Wirker sie nicht trotzdem sehen kann.",
+        "Angriffe gegen sie sind im Nachteil; ihre Angriffswürfe sind im Vorteil, außer das Ziel kann sie sehen."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "bloodied",
+      "label": "Blutig",
+      "short": "Blut",
+      "category": "physical",
+      "priority": 1,
+      "polarity": "bad",
+      "description": "Die Kreatur hat höchstens die Hälfte ihrer Trefferpunkte.",
+      "effects": [
+        "Reiner Zustandsmarker für Übersicht, Blutrausch, Phasenwechsel oder Monsterfähigkeiten."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "vulnerable",
+      "label": "Anfällig",
+      "short": "Anf",
+      "category": "physical",
+      "priority": 3,
+      "polarity": "bad",
+      "description": "Anfälligkeit gegen eine Schadensart.",
+      "effects": [
+        "Schaden der angegebenen Art wird verdoppelt; pro Schadensinstanz nur einmal anwenden."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "surprised",
+      "label": "Überrascht",
+      "short": "Über",
+      "category": "mental",
+      "priority": 4,
+      "polarity": "bad",
+      "description": "Die Kreatur hat nicht mit dem Kampf gerechnet.",
+      "effects": [
+        "Beim Initiativewurf im Nachteil.",
+        "Danach als Erinnerung entfernen, falls der Effekt nicht länger relevant ist."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "stunned",
+      "label": "Betäubt",
+      "short": "Bet",
+      "category": "critical",
+      "priority": 8,
+      "polarity": "bad",
+      "description": "Schwerer Zustand; die Kreatur ist handlungsunfähig und leichter zu treffen.",
+      "effects": [
+        "Hat den Zustand Kampfunfähig.",
+        "Stärke- und Geschicklichkeitsrettungswürfe scheitern automatisch.",
+        "Angriffswürfe gegen die Kreatur sind im Vorteil."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "unconscious",
+      "label": "Bewusstlos",
+      "short": "Bew",
+      "category": "critical",
+      "priority": 9,
+      "polarity": "bad",
+      "description": "Die Kreatur nimmt ihre Umgebung nicht wahr und ist wehrlos.",
+      "effects": [
+        "Hat Kampfunfähig und Liegend und lässt Gehaltenes fallen; nach Ende bleibt sie liegend.",
+        "Bewegungsrate 0 und kann nicht erhöht werden.",
+        "Angriffswürfe gegen sie sind im Vorteil.",
+        "Stärke- und Geschicklichkeitsrettungswürfe scheitern automatisch.",
+        "Treffer aus bis zu 1,5 m Entfernung sind kritische Treffer.",
+        "Sie nimmt die Umgebung nicht wahr."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "paralyzed",
+      "label": "Gelähmt",
+      "short": "Gel",
+      "category": "critical",
+      "priority": 7,
+      "polarity": "bad",
+      "description": "Die Kreatur ist bewegungsunfähig und Treffer aus nächster Nähe sind besonders gefährlich.",
+      "effects": [
+        "Hat den Zustand Kampfunfähig.",
+        "Bewegungsrate 0 und kann nicht erhöht werden.",
+        "Stärke- und Geschicklichkeitsrettungswürfe scheitern automatisch.",
+        "Angriffswürfe gegen sie sind im Vorteil.",
+        "Treffer aus bis zu 1,5 m Entfernung sind kritische Treffer."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "petrified",
+      "label": "Versteinert",
+      "short": "Verst",
+      "category": "incapacitated",
+      "priority": 6,
+      "polarity": "bad",
+      "description": "Die Kreatur ist in eine unbelebte Substanz verwandelt.",
+      "effects": [
+        "Mit nichtmagischer Ausrüstung in eine feste unbelebte Substanz verwandelt; Gewicht verzehnfacht, Alterung stoppt.",
+        "Hat den Zustand Kampfunfähig.",
+        "Bewegungsrate 0 und kann nicht erhöht werden.",
+        "Angriffswürfe gegen sie sind im Vorteil.",
+        "Stärke- und Geschicklichkeitsrettungswürfe scheitern automatisch.",
+        "Resistenz gegen alle Schadensarten.",
+        "Immun gegen den Zustand Vergiftet."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "incapacitated",
+      "label": "Kampfunfähig",
+      "short": "Kamp",
+      "category": "incapacitated",
+      "priority": 6,
+      "polarity": "bad",
+      "description": "Die Kreatur kann praktisch nicht handeln.",
+      "effects": [
+        "Keine Aktionen, Bonusaktionen oder Reaktionen.",
+        "Konzentration ist unterbrochen.",
+        "Kann nicht sprechen.",
+        "Bei Initiative im Nachteil, wenn sie beim Auswürfeln kampfunfähig ist."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "restrained",
+      "label": "Festgesetzt",
+      "short": "Fest",
+      "category": "movement",
+      "priority": 5,
+      "polarity": "bad",
+      "description": "Die Kreatur ist stark in ihrer Bewegung eingeschränkt.",
+      "effects": [
+        "Bewegungsrate 0 und kann nicht erhöht werden.",
+        "Angriffswürfe gegen sie sind im Vorteil; ihre eigenen Angriffswürfe sind im Nachteil.",
+        "Geschicklichkeitsrettungswürfe sind im Nachteil."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "blinded",
+      "label": "Blind",
+      "short": "Blind",
+      "category": "physical",
+      "priority": 5,
+      "polarity": "bad",
+      "description": "Die Kreatur kann nicht sehen.",
+      "effects": [
+        "Attributswürfe, die Sicht erfordern, scheitern automatisch.",
+        "Angriffswürfe gegen sie sind im Vorteil; ihre eigenen Angriffswürfe sind im Nachteil."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "frightened",
+      "label": "Verängstigt",
+      "short": "Ver",
+      "category": "mental",
+      "priority": 4,
+      "polarity": "bad",
+      "description": "Die Kreatur fürchtet eine Quelle.",
+      "effects": [
+        "Attributs- und Angriffswürfe sind im Nachteil, solange die Quelle der Furcht in Sichtlinie ist.",
+        "Sie kann sich nicht willentlich auf die Quelle der Furcht zubewegen."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "poisoned",
+      "label": "Vergiftet",
+      "short": "Verg",
+      "category": "physical",
+      "priority": 3,
+      "polarity": "bad",
+      "description": "Gift oder ein ähnlicher Effekt beeinträchtigt die Kreatur.",
+      "effects": [
+        "Angriffs- und Attributswürfe sind im Nachteil."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "exhaustion",
+      "label": "Erschöpft",
+      "short": "Ersch",
+      "category": "physical",
+      "priority": 3,
+      "polarity": "bad",
+      "description": "Kumulativer Zustand mit Erschöpfungsstufen.",
+      "effects": [
+        "Jedes Erleiden erhöht die Erschöpfungsstufe; bei 6 Stufen stirbt die Kreatur.",
+        "W20-Prüfungen werden um das Doppelte der Erschöpfungsstufe verringert.",
+        "Bewegungsrate sinkt um 1,5 m pro Erschöpfungsstufe.",
+        "Eine lange Rast entfernt eine Stufe; bei 0 Stufen endet der Zustand."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "deafened",
+      "label": "Taub",
+      "short": "Taub",
+      "category": "physical",
+      "priority": 3,
+      "polarity": "bad",
+      "description": "Die Kreatur kann nicht hören.",
+      "effects": [
+        "Attributswürfe, die Hörvermögen erfordern, scheitern automatisch."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "prone",
+      "label": "Liegend",
+      "short": "Lieg",
+      "category": "movement",
+      "priority": 3,
+      "polarity": "bad",
+      "description": "Die Kreatur liegt am Boden.",
+      "effects": [
+        "Sie kann nur kriechen oder die Hälfte ihrer Bewegungsrate ausgeben, um aufzustehen; bei Bewegungsrate 0 kann sie nicht aufstehen.",
+        "Ihre Angriffswürfe sind im Nachteil.",
+        "Angriffe gegen sie sind im Vorteil, wenn der Angreifer höchstens 1,5 m entfernt ist; sonst im Nachteil."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "grappled",
+      "label": "Gepackt",
+      "short": "Gep",
+      "category": "movement",
+      "priority": 2,
+      "polarity": "bad",
+      "description": "Die Kreatur wird festgehalten.",
+      "effects": [
+        "Bewegungsrate 0 und kann nicht erhöht werden.",
+        "Angriffe gegen Ziele außer der packenden Kreatur sind im Nachteil.",
+        "Die packende Kreatur kann sie ziehen oder tragen; das kostet meist doppelte Bewegung."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "charmed",
+      "label": "Bezaubert",
+      "short": "Bez",
+      "category": "mental",
+      "priority": 2,
+      "polarity": "bad",
+      "description": "Die Kreatur ist magisch oder anderweitig eingenommen.",
+      "effects": [
+        "Sie kann den Zauberwirker nicht angreifen oder als Ziel schädigender Fähigkeiten und magischer Effekte wählen.",
+        "Der Zauberwirker hat Vorteil bei Attributswürfen für soziale Interaktionen mit ihr."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "dead",
+      "label": "Tot",
+      "short": "Tot",
+      "category": "critical",
+      "priority": 10,
+      "polarity": "bad",
+      "description": "Die Kreatur ist tot.",
+      "effects": [
+        "Keine Trefferpunkte und keine Heilung möglich, bis ein passender Wiederbelebungseffekt greift.",
+        "Als Encounter-Marker gedacht; ersetzt keine detaillierte Todes-/Wiederbelebungsregel."
+      ],
+      "isOfficial": true
+    },
+    {
+      "id": "glowing",
+      "label": "Glühend",
+      "short": "Glüh",
+      "category": "magic",
+      "priority": 4,
+      "polarity": "bad",
+      "description": "Leuchtet weithin sichtbar.",
+      "effects": [
+        "Unsichtbarkeit ist aufgehoben.",
+        "Angriffe sehen das Ziel leichter."
+      ],
+      "isOfficial": false
+    }
+  ],
+  "hpMode": "roll",
+  "keepDatabaseOpen": false,
+  "selectedTheme": "midnight",
+  "log": [
+    {
+      "id": "55555555-5555-5555-5555-555555555555",
+      "date": "2026-01-04T05:06:07Z",
+      "message": "Runde 3 — Älva ist am Zug 🎲",
+      "kind": "info"
+    },
+    {
+      "id": "66666666-6666-6666-6666-666666666666",
+      "date": "2026-01-04T05:07:07Z",
+      "message": "System bereit",
+      "kind": "system"
+    },
+    {
+      "id": "77777777-7777-7777-7777-777777777777",
+      "date": "2026-01-04T05:08:07Z",
+      "message": "Würfel: 2W8+3",
+      "kind": "roll"
+    },
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "date": "2026-01-04T05:09:07Z",
+      "message": "Status geändert",
+      "kind": "status"
+    },
+    {
+      "id": "99999999-9999-9999-9999-999999999999",
+      "date": "2026-01-04T05:10:07Z",
+      "message": "Unbekannte Log-Art bleibt erhalten",
+      "kind": "future-kind"
+    }
+  ]
+}
