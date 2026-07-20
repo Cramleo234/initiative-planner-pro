@@ -553,6 +553,7 @@ public final class PlannerStore: ObservableObject {
         commit("\(count) Monster aus der Datenbank gelöscht", style: "warning") { state in
             state.monsterDatabase = []
         }
+        TokenStore.shared.removeAll()
     }
 
     public func importMonsterText(_ text: String, sourceName: String) {
@@ -582,6 +583,15 @@ public final class PlannerStore: ObservableObject {
         var collected: [MonsterTemplate] = []
         var matchedFiles = 0
         var skippedFiles = 0
+        // Alle Bilddateien im Import-Baum indizieren, damit Token-Einbettungen
+        // aus den .md-Dateien (die auf ein separates Bild verweisen) aufgelöst
+        // werden können — auch wenn das Bild in einem Nachbarordner liegt.
+        var imageIndex: [String: URL] = [:]   // NFC-Dateiname → URL
+        func indexImage(_ url: URL) {
+            let ext = url.pathExtension.lowercased()
+            guard ["webp", "png", "jpg", "jpeg"].contains(ext) else { return }
+            imageIndex[url.lastPathComponent.precomposedStringWithCanonicalMapping] = url
+        }
 
         for url in urls {
             var isDirectory: ObjCBool = false
@@ -593,18 +603,41 @@ public final class PlannerStore: ObservableObject {
                     options: [.skipsHiddenFiles, .skipsPackageDescendants])
                 while let item = enumerator?.nextObject() as? URL {
                     Self.collectMonsters(from: item, into: &collected, matched: &matchedFiles, skipped: &skippedFiles)
+                    indexImage(item)
                 }
             } else {
                 Self.collectMonsters(from: url, into: &collected, matched: &matchedFiles, skipped: &skippedFiles)
+                indexImage(url)
             }
         }
 
+        // Tokens auflösen: Dateiname aus der .md gegen den Bild-Index, dann cachen.
+        // Auch BESTEHENDE Datenbank-Einträge profitieren — wer erst die Monster
+        // und später den Bilder-Ordner importiert, bekommt die Tokens nachgereicht.
+        var tokenCount = 0
+        func resolveToken(_ fn: String?, id: String) {
+            guard let fn else { return }
+            let key = fn.precomposedStringWithCanonicalMapping
+            if let imgURL = imageIndex[key], TokenStore.shared.store(imageAt: imgURL, for: id) {
+                tokenCount += 1
+            }
+        }
+        for monster in collected { resolveToken(monster.tokenFilename, id: monster.id) }
+        for monster in state.monsterDatabase where !TokenStore.shared.hasToken(monster.id) {
+            resolveToken(monster.tokenFilename, id: monster.id)
+        }
+
         guard !collected.isEmpty else {
-            notice("Keine passenden .md-Monster gefunden", style: "warning")
+            if tokenCount > 0 {
+                notice("\(tokenCount) Monster-Tokens aus Bildern ergänzt", style: "success")
+                objectWillChange.send()   // Ring/Zeilen neu zeichnen
+            } else {
+                notice("Keine passenden .md-Monster gefunden", style: "warning")
+            }
             return
         }
 
-        let summary = "\(collected.count) Monster dauerhaft importiert (\(matchedFiles) Dateien\(skippedFiles > 0 ? ", \(skippedFiles) übersprungen" : ""))"
+        let summary = "\(collected.count) Monster dauerhaft importiert (\(matchedFiles) Dateien\(skippedFiles > 0 ? ", \(skippedFiles) übersprungen" : "")\(tokenCount > 0 ? ", \(tokenCount) Tokens" : ""))"
         commit(summary) { state in
             for var monster in collected {
                 monster.importedAt = Date()
