@@ -1,4 +1,5 @@
 import XCTest
+import AppKit
 
 final class MonsterImporterTests: XCTestCase {
     func testImportsObsidianStyleFrontmatterPermanentlyCompatibleMonster() throws {
@@ -261,5 +262,84 @@ final class FolderImportTests: XCTestCase {
         XCTAssertFalse(store.state.monsterDatabase.contains { $0.name == "Sitzung 12" }, "Notizen ohne Monster-Werte dürfen nicht importiert werden")
         XCTAssertFalse(store.state.monsterDatabase.contains { $0.name == "Falsch" }, "Nur .md-Dateien werden gelesen")
         XCTAssertEqual(store.state.monsterDatabase.first { $0.name == "Höhlentroll" }?.hpDice, "8d10+40")
+    }
+
+    func testExtractsTokenFilenameFromObsidianEmbed() throws {
+        let text = """
+        ---
+        name: Aboleth
+        rk: 17
+        tp: 150 (20W10+40)
+        hg: 10
+        ---
+
+        ## Merkmale
+        **Schleimwolke:** …
+
+        ![[Aboleth.webp|755]]
+
+        ![[Aboleth (Token).webp|378]]
+        """
+        let monsters = try MonsterImporter.importMonsters(from: text, sourceName: "Aboleth.md")
+        XCTAssertEqual(monsters.count, 1)
+        // Nur das (Token)-Bild wird erkannt, nicht das Vollbild.
+        XCTAssertEqual(monsters[0].tokenFilename, "Aboleth (Token).webp")
+    }
+
+    func testIgnoresTokenlessDocuments() throws {
+        let text = """
+        ---
+        name: Schattenwolf
+        rk: 14
+        tp: 45 (6d10+12)
+        hg: 3
+        ---
+
+        ![[Schattenwolf.webp|755]]
+        """
+        let monsters = try MonsterImporter.importMonsters(from: text, sourceName: "Schattenwolf.md")
+        XCTAssertNil(monsters[0].tokenFilename, "Ohne (Token)-Bild darf kein Token gesetzt werden")
+    }
+
+    /// End-to-End: Monster-.md mit Token-Einbettung + zugehöriges Bild im Nachbarordner
+    /// werden importiert; der Token wird aufgelöst und im TokenStore-Cache abgelegt.
+    func testFolderImportResolvesAndCachesToken() throws {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let monDir = tmp.appendingPathComponent("Monster")
+        let imgDir = tmp.appendingPathComponent("Bilder")
+        try FileManager.default.createDirectory(at: monDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: imgDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        try """
+        ---
+        name: Testkobold
+        rk: 12
+        tp: 7 (2d6)
+        hg: 1/4
+        typ: Humanoid
+        ---
+
+        ## Aktionen
+        **Dolch:** …
+
+        ![[Testkobold (Token).png|378]]
+        """.write(to: monDir.appendingPathComponent("Testkobold.md"), atomically: true, encoding: .utf8)
+
+        // Ein echtes kleines PNG erzeugen (Token-Bild im „Nachbarordner“).
+        let img = NSImage(size: NSSize(width: 40, height: 40))
+        img.lockFocus(); NSColor.systemTeal.setFill(); NSRect(x: 0, y: 0, width: 40, height: 40).fill(); img.unlockFocus()
+        let png = NSBitmapImageRep(data: img.tiffRepresentation!)!.representation(using: .png, properties: [:])!
+        try png.write(to: imgDir.appendingPathComponent("Testkobold (Token).png"))
+
+        let store = PlannerStore(fileURL: tmp.appendingPathComponent("state.json"), load: false)
+        store.importMonsterURLs([tmp])
+
+        let template = store.state.monsterDatabase.first { $0.name == "Testkobold" }
+        XCTAssertNotNil(template, "Monster muss importiert sein")
+        XCTAssertEqual(template?.tokenFilename, "Testkobold (Token).png")
+        XCTAssertNotNil(TokenStore.shared.image(for: template?.id), "Token muss aufgelöst und gecacht sein")
+
+        if let id = template?.id { TokenStore.shared.remove(id) }  // Test-Token aus echtem Cache räumen
     }
 }

@@ -62,7 +62,20 @@ public enum MonsterImporter {
         let body = String(text[endRange.upperBound...])
         let statblock = buildStatBlock(values: values, body: body)
         monster.statblock = statblock.isEmpty ? nil : statblock
+        monster.tokenFilename = extractTokenFilename(from: body)
         return monster
+    }
+
+    /// Liest den Token-Dateinamen aus einer Obsidian-Einbettung des Body:
+    /// `![[Aboleth (Token).webp|378]]` → „Aboleth (Token).webp“. Nur Token-Bilder
+    /// (mit „(Token)“ im Namen), nicht das Vollbild.
+    static func extractTokenFilename(from body: String) -> String? {
+        let pattern = #"!\[\[([^\]\|]*\(Token\)[^\]\|]*\.(?:webp|png|jpe?g))(?:\|[^\]]*)?\]\]"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return nil }
+        let ns = NSRange(body.startIndex..<body.endIndex, in: body)
+        guard let m = regex.firstMatch(in: body, range: ns),
+              let r = Range(m.range(at: 1), in: body) else { return nil }
+        return String(body[r]).trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: - Statblock (Frontmatter-Zusatzfelder + Body-Abschnitte)

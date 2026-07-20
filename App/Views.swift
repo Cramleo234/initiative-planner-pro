@@ -905,6 +905,19 @@ struct QuickHPButton: View {
 
 // MARK: - Monsterdatenbank (cleane Zeilen wie im Design 1c)
 
+/// Sortierschlüssel der Monsterdatenbank (Richtung separat umschaltbar).
+enum MonsterSort: String, CaseIterable, Identifiable {
+    case name, cr, xp
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .name: return "Name"
+        case .cr:   return "HG"
+        case .xp:   return "EP"
+        }
+    }
+}
+
 struct DatabaseView: View {
     @EnvironmentObject private var store: PlannerStore
     @Binding var showingImport: Bool
@@ -914,13 +927,15 @@ struct DatabaseView: View {
     @State private var crFilter = ""
     @State private var quantity = 1
     @State private var dropTargeted = false
+    @State private var sortMode: MonsterSort = .name
+    /// Sortierrichtung — per Pfeil-Knopf umschaltbar (Name startet aufsteigend, HG/EP absteigend).
+    @State private var sortAscending = true
 
     static let crOptions = ["", "0", "1/8", "1/4", "1/2", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10+", "15+", "20+"]
 
-    // Datenbank ist im Store dauerhaft sortiert — hier nur noch filtern.
     var filtered: [MonsterTemplate] {
         let query = search.lowercased()
-        return store.state.monsterDatabase.filter { monster in
+        let result = store.state.monsterDatabase.filter { monster in
             let searchOK = query.isEmpty
                 || monster.name.lowercased().contains(query)
                 || monster.type.lowercased().contains(query)
@@ -938,6 +953,14 @@ struct DatabaseView: View {
             }
             return searchOK && crOK
         }
+        // Sortierung nach gewähltem Schlüssel; Richtung über den Pfeil-Knopf.
+        let sorted: [MonsterTemplate]
+        switch sortMode {
+        case .name: sorted = result.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .cr:   sorted = result.sorted { challengeRatingValue($0.challengeRating) < challengeRatingValue($1.challengeRating) }
+        case .xp:   sorted = result.sorted { $0.xpValue < $1.xpValue }
+        }
+        return sortAscending ? sorted : sorted.reversed()
     }
 
     var body: some View {
@@ -948,6 +971,8 @@ struct DatabaseView: View {
             GlassCard {
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeader(title: "Monster-Datenbank", subtitle: "Dauerhaft in der App gespeichert", icon: "books.vertical.fill")
+                    // Zeile 1 — Suchen & Sortieren (getrennt von den Aktionen, damit
+                    // bei schmalen Fenstern nichts abgeschnitten wird)
                     HStack {
                         TextField("Suchen…", text: $search)
                         Picker("HG", selection: $crFilter) {
@@ -956,11 +981,33 @@ struct DatabaseView: View {
                             }
                         }
                         .labelsHidden()
-                        .frame(width: 110)
+                        .frame(width: 120)
+                        Text("Sortieren:").font(.caption).foregroundStyle(.secondary)
+                        Picker("Sortierung", selection: $sortMode) {
+                            ForEach(MonsterSort.allCases) { Text($0.label).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
+                        .help("Sortierung der Liste — nach Name, Herausforderungsgrad oder Erfahrungspunkten")
+                        .onChange(of: sortMode) { _, neu in
+                            // Sinnvolle Startrichtung je Schlüssel: Name A–Z, HG/EP stärkste zuerst
+                            sortAscending = (neu == .name)
+                        }
+                        Button {
+                            sortAscending.toggle()
+                        } label: {
+                            Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
+                        }
+                        .help(sortAscending ? "Aufsteigend — Klick für absteigend" : "Absteigend — Klick für aufsteigend")
+                    }
+                    // Zeile 2 — Aktionen
+                    HStack {
                         Stepper("Menge \(quantity)", value: $quantity, in: 1...50)
                         Picker("HP", selection: Binding(get: { store.state.hpMode }, set: { store.setHPMode($0) })) {
                             ForEach(HPMode.allCases) { Text($0.label).tag($0) }
                         }.pickerStyle(.segmented).frame(width: 220)
+                        Spacer()
                         Button { showingImport = true } label: { Label("Import", systemImage: "square.and.arrow.down") }
                             .buttonStyle(.borderedProminent)
                             .tint(theme.accent)
@@ -1077,6 +1124,15 @@ struct MonsterDBRow: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.secondary)
                     .rotationEffect(.degrees(expanded ? 90 : 0))
+                // Token-Miniatur (falls beim Import ein Token-Bild gefunden wurde)
+                if let tok = TokenStore.shared.image(for: monster.id) {
+                    Image(nsImage: tok)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 30, height: 30)
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(theme.cardBorder, lineWidth: 1))
+                }
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
                         Text(monster.name)
@@ -2259,18 +2315,32 @@ struct RingToken: View {
     var body: some View {
         let theme = store.theme
         let initial = String(creature.name.prefix(1)).uppercased()
+        let diameter: CGFloat = isActive ? 72 : 60
+        let token = TokenStore.shared.image(for: creature.sourceMonsterID)
         VStack(spacing: 5) {
             ZStack {
-                if isActive {
-                    Circle()
-                        .fill(LinearGradient(colors: [theme.accentBright, theme.accent, theme.tertiary],
-                                             startPoint: .topLeading, endPoint: .bottomTrailing))
+                if let token {
+                    // Token-Bild aus der Monster-Markdown (falls importiert)
+                    Image(nsImage: token)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: diameter, height: diameter)
+                        .clipShape(Circle())
+                    if isActive {
+                        Circle().fill(theme.accent.opacity(0.12))
+                    }
                 } else {
-                    Circle().fill(.thinMaterial)
+                    if isActive {
+                        Circle()
+                            .fill(LinearGradient(colors: [theme.accentBright, theme.accent, theme.tertiary],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                    } else {
+                        Circle().fill(.thinMaterial)
+                    }
+                    Text(initial)
+                        .font(.system(size: isActive ? 27 : 23, weight: .black, design: .rounded))
+                        .foregroundStyle(isActive ? theme.accentContrast : .primary)
                 }
-                Text(initial)
-                    .font(.system(size: isActive ? 27 : 23, weight: .black, design: .rounded))
-                    .foregroundStyle(isActive ? theme.accentContrast : .primary)
                 // Typ-Symbol klein am Rand des Tokens
                 Text(creature.kind.emoji)
                     .font(.system(size: 13))
@@ -2278,7 +2348,7 @@ struct RingToken: View {
                     .background(.regularMaterial, in: Circle())
                     .offset(x: 22, y: 22)
             }
-            .frame(width: isActive ? 72 : 60, height: isActive ? 72 : 60)
+            .frame(width: diameter, height: diameter)
             .overlay(Circle().strokeBorder(
                 isActive ? theme.accentBright.opacity(0.9) : theme.cardBorder,
                 lineWidth: isActive ? 2 : 1))

@@ -181,8 +181,12 @@ public struct MonsterTemplate: Identifiable, Codable, Equatable {
     public var importedAt: Date?
     /// Optionaler vollständiger Statblock — fehlt bei manuell angelegten Monstern.
     public var statblock: StatBlock?
+    /// Dateiname des Tokens aus der Markdown-Datei (z. B. „Aboleth (Token).webp“),
+    /// wird beim Import aus einer `![[… (Token)…]]`-Einbettung gelesen. Das eigentliche
+    /// Bild liegt im Token-Cache der App (siehe TokenStore), nicht im Speicherzustand.
+    public var tokenFilename: String?
 
-    public init(id: String, name: String, armorClass: Int = 10, hpAverage: Int = 1, hpDice: String = "1d8", challengeRating: String = "?", initiativeBonus: Int = 0, type: String = "", source: String = "App", notes: String = "", importedAt: Date? = nil, statblock: StatBlock? = nil) {
+    public init(id: String, name: String, armorClass: Int = 10, hpAverage: Int = 1, hpDice: String = "1d8", challengeRating: String = "?", initiativeBonus: Int = 0, type: String = "", source: String = "App", notes: String = "", importedAt: Date? = nil, statblock: StatBlock? = nil, tokenFilename: String? = nil) {
         self.id = id
         self.name = name
         self.armorClass = armorClass
@@ -195,6 +199,12 @@ public struct MonsterTemplate: Identifiable, Codable, Equatable {
         self.notes = notes
         self.importedAt = importedAt
         self.statblock = statblock
+        self.tokenFilename = tokenFilename
+    }
+
+    /// Numerischer EP-Wert für Sortierung (aus `statblock.xp`, z. B. „5.900“ → 5900).
+    public var xpValue: Int {
+        Int((statblock?.xp ?? "").filter(\.isNumber)) ?? 0
     }
 }
 
