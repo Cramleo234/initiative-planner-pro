@@ -1372,6 +1372,7 @@ struct StatBlockSection: View {
             }
             .padding(.top, 4)
             .padding(.leading, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
         } label: {
             HStack(spacing: 5) {
                 Image(systemName: icon)
