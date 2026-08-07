@@ -28,10 +28,14 @@ ein **eigener Tap** (ein kleines GitHub-Repo mit der Cask-Formel) plus
 
 ```bash
 brew tap Cramleo234/tap
+brew trust Cramleo234/tap
 brew install --cask initiative-planner-pro
-# oder in einem Schritt:
-brew install --cask Cramleo234/tap/initiative-planner-pro
 ```
+
+**`brew trust` ist ab Homebrew 6 zwingend.** Taps von Drittanbietern werden ohne
+ausdrückliche Freigabe kommentarlos übersprungen — die App ist dann für Nutzer
+schlicht nicht auffindbar, ohne verwertbare Fehlermeldung. Bei älteren
+Homebrew-Versionen existiert der Befehl noch nicht und wird weggelassen.
 
 ## Hinweise
 
