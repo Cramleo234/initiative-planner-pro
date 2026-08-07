@@ -10,15 +10,19 @@
 		070D1D9E8305ADD771A3857B /* InitiativePlannerProMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 699B6B1BE5761C8FD5D7EF4A /* InitiativePlannerProMacApp.swift */; };
 		4B49E4D268FDCEE55E3E2FFF /* MonsterImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */; };
 		71237619EA6157ABA016F3F5 /* DiceRollerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */; };
+		814666D7075D2D6C35871E10 /* PlayerImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA9450A940562EA1BD566E7 /* PlayerImageStore.swift */; };
 		8658FAB18C666B3A35102E12 /* PlannerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A586DC1D27820122C3226C2E /* PlannerStore.swift */; };
 		8768C62804E1A1D127DB19CB /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */; };
 		918003D40DA857A27E4BA880 /* MonsterImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */; };
+		9CB050E424741D778BB84D5C /* PlayerDatabaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E43A885A1E53E8D23EAC241F /* PlayerDatabaseView.swift */; };
 		AC95B3127477551A830D4E81 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 940234F0DD15E46A4A6EF932 /* Assets.xcassets */; };
 		C7ECDF026A3FEF99B063FBE6 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F5D50A074E7E7954A5E6DF /* TokenStore.swift */; };
+		CA0817A6AD55741E39C0DC0D /* PlayerDatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40F02E6BCD4AA330027C6D43 /* PlayerDatabaseTests.swift */; };
 		D13F474298452A9C63DDEA10 /* DiceRoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96877E6A1FB045AAB660572 /* DiceRoller.swift */; };
 		DDC4C8B0AC5FC9A95E39638E /* DiceRoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96877E6A1FB045AAB660572 /* DiceRoller.swift */; };
 		E1778BFCA0ADA36C966ECB68 /* MonsterImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */; };
 		E917C47A7639C258F4998AF2 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F5D50A074E7E7954A5E6DF /* TokenStore.swift */; };
+		E9A47F3C3F6DCBC25364613C /* PlayerImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA9450A940562EA1BD566E7 /* PlayerImageStore.swift */; };
 		EA3163B20DC54F6B74E9E7B9 /* PlannerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A586DC1D27820122C3226C2E /* PlannerStore.swift */; };
 		EB0E880A6CF074931362862F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */; };
 		EDB97D306DA42487C14B7F76 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4386046E906E4A65AB0DD11 /* Views.swift */; };
@@ -27,16 +31,19 @@
 /* Begin PBXFileReference section */
 		11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollerTests.swift; sourceTree = "<group>"; };
 		3F77A380C13AEF80C1601D72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		40F02E6BCD4AA330027C6D43 /* PlayerDatabaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDatabaseTests.swift; sourceTree = "<group>"; };
 		47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		699B6B1BE5761C8FD5D7EF4A /* InitiativePlannerProMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitiativePlannerProMacApp.swift; sourceTree = "<group>"; };
 		730A8218124CC8A6BAA7BC1E /* InitiativePlannerProMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InitiativePlannerProMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		79F5D50A074E7E7954A5E6DF /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenStore.swift; sourceTree = "<group>"; };
 		84005D2C99590ACCC3DE8561 /* InitiativePlannerProMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InitiativePlannerProMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8FA9450A940562EA1BD566E7 /* PlayerImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerImageStore.swift; sourceTree = "<group>"; };
 		9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonsterImporter.swift; sourceTree = "<group>"; };
 		940234F0DD15E46A4A6EF932 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A586DC1D27820122C3226C2E /* PlannerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannerStore.swift; sourceTree = "<group>"; };
 		BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonsterImporterTests.swift; sourceTree = "<group>"; };
 		C4386046E906E4A65AB0DD11 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views.swift; sourceTree = "<group>"; };
+		E43A885A1E53E8D23EAC241F /* PlayerDatabaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDatabaseView.swift; sourceTree = "<group>"; };
 		E96877E6A1FB045AAB660572 /* DiceRoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRoller.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -58,6 +65,7 @@
 				47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */,
 				9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */,
 				A586DC1D27820122C3226C2E /* PlannerStore.swift */,
+				8FA9450A940562EA1BD566E7 /* PlayerImageStore.swift */,
 				79F5D50A074E7E7954A5E6DF /* TokenStore.swift */,
 			);
 			path = Core;
@@ -77,6 +85,7 @@
 			children = (
 				11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */,
 				BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */,
+				40F02E6BCD4AA330027C6D43 /* PlayerDatabaseTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -87,6 +96,7 @@
 				940234F0DD15E46A4A6EF932 /* Assets.xcassets */,
 				3F77A380C13AEF80C1601D72 /* Info.plist */,
 				699B6B1BE5761C8FD5D7EF4A /* InitiativePlannerProMacApp.swift */,
+				E43A885A1E53E8D23EAC241F /* PlayerDatabaseView.swift */,
 				C4386046E906E4A65AB0DD11 /* Views.swift */,
 			);
 			path = App;
@@ -188,6 +198,8 @@
 				8768C62804E1A1D127DB19CB /* Models.swift in Sources */,
 				4B49E4D268FDCEE55E3E2FFF /* MonsterImporter.swift in Sources */,
 				8658FAB18C666B3A35102E12 /* PlannerStore.swift in Sources */,
+				9CB050E424741D778BB84D5C /* PlayerDatabaseView.swift in Sources */,
+				814666D7075D2D6C35871E10 /* PlayerImageStore.swift in Sources */,
 				E917C47A7639C258F4998AF2 /* TokenStore.swift in Sources */,
 				EDB97D306DA42487C14B7F76 /* Views.swift in Sources */,
 			);
@@ -203,6 +215,8 @@
 				E1778BFCA0ADA36C966ECB68 /* MonsterImporter.swift in Sources */,
 				918003D40DA857A27E4BA880 /* MonsterImporterTests.swift in Sources */,
 				EA3163B20DC54F6B74E9E7B9 /* PlannerStore.swift in Sources */,
+				CA0817A6AD55741E39C0DC0D /* PlayerDatabaseTests.swift in Sources */,
+				E9A47F3C3F6DCBC25364613C /* PlayerImageStore.swift in Sources */,
 				C7ECDF026A3FEF99B063FBE6 /* TokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

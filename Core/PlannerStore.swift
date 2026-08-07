@@ -47,6 +47,10 @@ public final class PlannerStore: ObservableObject {
         } else {
             self.state = PlannerState(log: [LogEntry(message: "App gestartet", kind: "system")])
         }
+        // Migration abschließen: eine geladene Schema-1-Datei wird strukturell beim
+        // nächsten Speichern ohnehin als Schema 2 geschrieben (playerDatabase ist
+        // additiv leer) — die Versionsnummer selbst wird hier direkt nachgezogen.
+        state.schemaVersion = PlannerState.currentSchemaVersion
         // Sortierung ist Invariante: einmal beim Laden, nie wieder pro Frame in der View.
         state.monsterDatabase.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         // Offizielle Stati auf die vollständige Bibliothek (inkl. Regeltexten) heben;
@@ -666,6 +670,82 @@ public final class PlannerStore: ObservableObject {
         for monster in monsters {
             collected.removeAll { $0.id == monster.id }
             collected.append(monster)
+        }
+    }
+
+    // MARK: - Spieler
+
+    /// Legt eine neue Spielervorlage an oder aktualisiert eine bestehende (per `id`
+    /// unterschieden). Bildänderungen werden VOR diesem Commit bereits per
+    /// `storePlayerImage` in den PlayerImageStore geschrieben, sodass ein einzelner
+    /// Commit Name/Werte/Bildverweis gemeinsam trägt — ein Undo nimmt alles zurück.
+    public func savePlayerTemplate(_ template: PlayerTemplate) {
+        let isNew = !state.playerDatabase.contains { $0.id == template.id }
+        commit(isNew ? "\(template.name) als Spieler angelegt" : "\(template.name) aktualisiert") { state in
+            state.playerDatabase.removeAll { $0.id == template.id }
+            state.playerDatabase.append(template)
+            state.playerDatabase.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            // Bildänderung wirkt sofort auch auf bereits aktive Kämpfer mit dieser Vorlage —
+            // andere kampfspezifische Werte (HP, Initiative …) bleiben als eigener Snapshot unberührt.
+            for index in state.players.indices where state.players[index].sourcePlayerID == template.id {
+                state.players[index].sourcePlayerImageID = template.imageID
+            }
+        }
+    }
+
+    public func deletePlayerTemplate(_ id: UUID) {
+        guard let template = state.playerDatabase.first(where: { $0.id == id }) else { return }
+        commit("\(template.name) aus Spielerdatenbank gelöscht", style: "warning") { state in
+            state.playerDatabase.removeAll { $0.id == id }
+        }
+    }
+
+    /// Kopiert die Bilddatei an `source` unter einer neuen Bildversions-UUID in den
+    /// PlayerImageStore (kanonisches Muster wie bei Monster-Tokens: erst kopieren,
+    /// danach EIN Store-Commit über `savePlayerTemplate`). Schlägt die Kopie fehl,
+    /// bleibt die aufrufende Ansicht ohne Bildänderung nutzbar.
+    @discardableResult
+    public func storePlayerImage(at source: URL) -> UUID? {
+        let newID = UUID()
+        guard PlayerImageStore.shared.store(imageAt: source, as: newID) else {
+            notice("Bild konnte nicht gelesen werden — Spieler bleibt ohne Bildänderung", style: "warning")
+            return nil
+        }
+        return newID
+    }
+
+    /// Übernimmt eine Spielervorlage als neuen Kämpfer in den aktuellen Kampf. Nicht
+    /// gesetzte RK/TP/Ini-Werte erhalten hier sichere interne Startwerte (RK 10, TP 0,
+    /// Ini 0) — die Vorlage selbst bleibt davon unberührt und zeigt weiterhin „nicht gesetzt“.
+    public func spawnPlayerIntoCombat(_ templateID: UUID) {
+        guard let template = state.playerDatabase.first(where: { $0.id == templateID }) else { return }
+        commit("\(template.name) zum Kampf hinzugefügt") { state in
+            let hp = template.maxHitPoints ?? 0
+            state.players.append(Creature(
+                name: template.name, kind: .player,
+                armorClass: template.armorClass ?? 10,
+                hitPoints: hp, maxHitPoints: hp,
+                initiativeBonus: template.initiativeBonus ?? 0,
+                notes: template.notes,
+                sourcePlayerID: template.id, sourcePlayerImageID: template.imageID))
+        }
+    }
+
+    /// Übernimmt eine Spielervorlage direkt in einen bereits gespeicherten Encounter,
+    /// ohne den aktuellen Kampf zu verändern.
+    public func spawnPlayer(_ templateID: UUID, intoEncounter encounterID: UUID) {
+        guard let template = state.playerDatabase.first(where: { $0.id == templateID }),
+              let targetName = state.encounters.first(where: { $0.id == encounterID })?.name else { return }
+        commit("\(template.name) zu Encounter \(targetName) hinzugefügt") { state in
+            guard let eIndex = state.encounters.firstIndex(where: { $0.id == encounterID }) else { return }
+            let hp = template.maxHitPoints ?? 0
+            state.encounters[eIndex].players.append(Creature(
+                name: template.name, kind: .player,
+                armorClass: template.armorClass ?? 10,
+                hitPoints: hp, maxHitPoints: hp,
+                initiativeBonus: template.initiativeBonus ?? 0,
+                notes: template.notes,
+                sourcePlayerID: template.id, sourcePlayerImageID: template.imageID))
         }
     }
 
