@@ -21,7 +21,20 @@ Die App wird bewusst **ohne Monsterdaten** ausgeliefert — jeder importiert sei
 Am einfachsten über [Homebrew](https://brew.sh):
 
 ```bash
-brew install --cask Cramleo234/tap/initiative-planner-pro
+brew tap Cramleo234/tap
+brew trust Cramleo234/tap
+brew install --cask initiative-planner-pro
+```
+
+> **Warum `brew trust`?** Seit Homebrew 6 werden Taps von Drittanbietern nur noch
+> nach ausdrücklicher Freigabe verwendet. Ohne diesen Schritt überspringt Homebrew
+> den Tap kommentarlos und meldet, die App sei nicht auffindbar.
+> Bei älteren Homebrew-Versionen gibt es `brew trust` noch nicht — dort einfach weglassen.
+
+Ein Update später läuft mit:
+
+```bash
+brew upgrade --cask initiative-planner-pro
 ```
 
 Oder manuell: das DMG von der [Releases-Seite](https://github.com/Cramleo234/initiative-planner-pro/releases) laden, öffnen und die App nach **Programme** ziehen.
