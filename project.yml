@@ -32,8 +32,8 @@ targets:
         CFBundleName: Initiative Planner Pro
         CFBundleDisplayName: Initiative Planner Pro
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
-        CFBundleShortVersionString: "1.0.2"
-        CFBundleVersion: "102"
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "110"
         LSMinimumSystemVersion: "15.0"
         LSApplicationCategoryType: public.app-category.games
         NSPrincipalClass: NSApplication
