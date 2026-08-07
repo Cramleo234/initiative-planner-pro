@@ -2012,11 +2012,15 @@ func presentMonsterFolderPicker(store: PlannerStore) {
     let panel = NSOpenPanel()
     panel.canChooseDirectories = true
     panel.canChooseFiles = false
-    panel.allowsMultipleSelection = false
-    panel.message = "Ordner mit Monster-.md-Dateien auswählen — alle Unterordner werden durchsucht"
+    // Mehrfachauswahl bewusst erlaubt: liegen Monster-.md-Dateien und ihre Token-Bilder
+    // in getrennten Geschwisterordnern (z. B. Obsidian-Vaults mit eigenem Bilderordner),
+    // lässt sich sonst nie beides in einem Importvorgang erfassen — Bilder blieben
+    // dauerhaft unauflösbar, auch bei erneutem Import.
+    panel.allowsMultipleSelection = true
+    panel.message = "Einen oder mehrere Ordner auswählen (⌘-Klick für Mehrfachauswahl) — alle Unterordner werden durchsucht. Liegen Token-Bilder in einem separaten Ordner, diesen mit auswählen."
     panel.prompt = "Importieren"
-    guard panel.runModal() == .OK, let url = panel.url else { return }
-    store.importMonsterFolder(url)
+    guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+    store.importMonsterURLs(panel.urls)
 }
 
 struct MonsterImportView: View {

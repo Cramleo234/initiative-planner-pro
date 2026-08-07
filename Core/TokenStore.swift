@@ -57,10 +57,39 @@ public final class TokenStore: @unchecked Sendable {
         return img
     }
 
+    /// Stellt sicher, dass eine Datei tatsächlich lokal vorliegt.
+    ///
+    /// Token-Bilder liegen typischerweise in einem iCloud-synchronisierten Obsidian-Vault.
+    /// Dort sind Dateien oft nur Platzhalter ("notDownloaded"): sie erscheinen im Finder
+    /// mit korrekter Größe, ein Lesezugriff blockiert aber im read()-Syscall, bis iCloud
+    /// die Daten nachgeladen hat — teilweise minutenlang oder bis zum Fehlschlag.
+    /// Deshalb wird der Download hier explizit angefordert und begrenzt abgewartet.
+    /// Gibt `false` zurück, wenn die Datei nicht rechtzeitig verfügbar wird.
+    public func ensureLocallyAvailable(_ url: URL, timeout: TimeInterval = 25) -> Bool {
+        func status(_ u: URL) -> URLUbiquitousItemDownloadingStatus? {
+            // Bewusst frische URL: resourceValues cachen sonst den alten Status.
+            try? URL(fileURLWithPath: u.path)
+                .resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
+                .ubiquitousItemDownloadingStatus
+        }
+        // Kein iCloud-Item (normale lokale Datei) → direkt lesbar.
+        guard let current = status(url) else { return true }
+        if current == .current || current == .downloaded { return true }
+
+        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.2)
+            if let s = status(url), s == .current || s == .downloaded { return true }
+        }
+        return false
+    }
+
     /// Dekodiert das Bild an `source` (webp/png/jpg), skaliert es herunter und legt es
     /// als PNG unter der Monster-ID ab. Gibt `true` bei Erfolg zurück.
     @discardableResult
     public func store(imageAt source: URL, for id: String) -> Bool {
+        guard ensureLocallyAvailable(source) else { return false }
         guard let img = NSImage(contentsOf: source), let png = downscaledPNG(img) else { return false }
         do {
             try png.write(to: url(for: id))

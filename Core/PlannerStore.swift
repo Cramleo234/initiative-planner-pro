@@ -581,6 +581,41 @@ public final class PlannerStore: ObservableObject {
         importMonsterURLs([folderURL])
     }
 
+    /// Legt die Token-Bilder im Hintergrund an und meldet den Fortschritt.
+    ///
+    /// Bewusst NICHT auf dem Main-Actor: Die Bilder liegen meist in einem
+    /// iCloud-Vault, wo einzelne Dateien erst nachgeladen werden müssen. Auf dem
+    /// Main-Actor würde jede solche Datei die gesamte Oberfläche blockieren —
+    /// bei mehreren hundert Bildern friert die App dadurch minutenlang ein und
+    /// wirkt, als würden Bilder gar nicht geladen.
+    private func resolveTokensInBackground(_ jobs: [(id: String, imageURL: URL)]) {
+        guard !jobs.isEmpty else { return }
+        let total = jobs.count
+        notice("Lade \(total) Token-Bilder …", style: "info")
+        Task.detached(priority: .utility) { [weak self] in
+            var done = 0, failed = 0
+            for (index, job) in jobs.enumerated() {
+                if TokenStore.shared.store(imageAt: job.imageURL, for: job.id) { done += 1 } else { failed += 1 }
+                // Zwischenstand, damit lange Läufe (iCloud-Downloads) sichtbar bleiben.
+                if (index + 1) % 50 == 0 {
+                    let progress = index + 1
+                    await MainActor.run { self?.notice("Token-Bilder: \(progress)/\(total) …", style: "info") }
+                }
+            }
+            let ok = done, miss = failed
+            await MainActor.run {
+                guard let self else { return }
+                if miss == 0 {
+                    self.notice("\(ok) Token-Bilder geladen", style: "success")
+                } else {
+                    self.notice("\(ok) Token-Bilder geladen, \(miss) nicht verfügbar (evtl. noch nicht aus iCloud geladen)",
+                                style: ok > 0 ? "warning" : "error")
+                }
+                self.objectWillChange.send()   // Ring/Zeilen neu zeichnen
+            }
+        }
+    }
+
     /// Gemeinsamer Import für Ordner-Dialog und Drag & Drop: akzeptiert eine
     /// Mischung aus Ordnern (rekursiv) und einzelnen .md-Dateien — in EINEM Commit.
     public func importMonsterURLs(_ urls: [URL]) {
@@ -615,33 +650,29 @@ public final class PlannerStore: ObservableObject {
             }
         }
 
-        // Tokens auflösen: Dateiname aus der .md gegen den Bild-Index, dann cachen.
-        // Auch BESTEHENDE Datenbank-Einträge profitieren — wer erst die Monster
-        // und später den Bilder-Ordner importiert, bekommt die Tokens nachgereicht.
-        var tokenCount = 0
-        func resolveToken(_ fn: String?, id: String) {
+        // Token-Kandidaten sammeln: neu importierte Monster plus BESTEHENDE
+        // Datenbank-Einträge ohne Token — wer erst die Monster und später den
+        // Bilder-Ordner importiert, bekommt die Tokens so nachgereicht.
+        var tokenJobs: [(id: String, imageURL: URL)] = []
+        func queueToken(_ fn: String?, id: String) {
             guard let fn else { return }
             let key = fn.precomposedStringWithCanonicalMapping
-            if let imgURL = imageIndex[key], TokenStore.shared.store(imageAt: imgURL, for: id) {
-                tokenCount += 1
-            }
+            if let imgURL = imageIndex[key] { tokenJobs.append((id: id, imageURL: imgURL)) }
         }
-        for monster in collected { resolveToken(monster.tokenFilename, id: monster.id) }
+        for monster in collected { queueToken(monster.tokenFilename, id: monster.id) }
         for monster in state.monsterDatabase where !TokenStore.shared.hasToken(monster.id) {
-            resolveToken(monster.tokenFilename, id: monster.id)
+            queueToken(monster.tokenFilename, id: monster.id)
         }
+        resolveTokensInBackground(tokenJobs)
 
         guard !collected.isEmpty else {
-            if tokenCount > 0 {
-                notice("\(tokenCount) Monster-Tokens aus Bildern ergänzt", style: "success")
-                objectWillChange.send()   // Ring/Zeilen neu zeichnen
-            } else {
+            if tokenJobs.isEmpty {
                 notice("Keine passenden .md-Monster gefunden", style: "warning")
             }
             return
         }
 
-        let summary = "\(collected.count) Monster dauerhaft importiert (\(matchedFiles) Dateien\(skippedFiles > 0 ? ", \(skippedFiles) übersprungen" : "")\(tokenCount > 0 ? ", \(tokenCount) Tokens" : ""))"
+        let summary = "\(collected.count) Monster dauerhaft importiert (\(matchedFiles) Dateien\(skippedFiles > 0 ? ", \(skippedFiles) übersprungen" : "")\(!tokenJobs.isEmpty ? ", \(tokenJobs.count) Tokens folgen" : ""))"
         commit(summary) { state in
             for var monster in collected {
                 monster.importedAt = Date()

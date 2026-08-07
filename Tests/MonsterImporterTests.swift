@@ -338,8 +338,62 @@ final class FolderImportTests: XCTestCase {
         let template = store.state.monsterDatabase.first { $0.name == "Testkobold" }
         XCTAssertNotNil(template, "Monster muss importiert sein")
         XCTAssertEqual(template?.tokenFilename, "Testkobold (Token).png")
-        XCTAssertNotNil(TokenStore.shared.image(for: template?.id), "Token muss aufgelöst und gecacht sein")
+        // Bildauflösung läuft bewusst im Hintergrund (iCloud-Downloads dürfen die
+        // Oberfläche nicht blockieren) — deshalb hier auf den Cache warten.
+        XCTAssertTrue(waitForToken(template?.id), "Token muss aufgelöst und gecacht sein")
 
         if let id = template?.id { TokenStore.shared.remove(id) }  // Test-Token aus echtem Cache räumen
+    }
+
+    /// Wartet begrenzt darauf, dass die asynchrone Token-Auflösung den Cache gefüllt hat.
+    private func waitForToken(_ id: String?, timeout: TimeInterval = 5) -> Bool {
+        guard let id else { return false }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if TokenStore.shared.hasToken(id) { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        return false
+    }
+
+    /// Regression: Monster-.md und Token-Bild liegen in zwei getrennten, NICHT
+    /// gemeinsam übergeordneten Ordnern (z. B. Obsidian-Vault mit eigenem
+    /// Bilderordner neben dem Monsterordner). Beide Ordner müssen in EINEM
+    /// Importvorgang ausgewählt werden können, sonst bleibt der Token dauerhaft
+    /// unauflösbar — auch bei jedem erneuten Import.
+    func testFolderImportResolvesTokenAcrossTwoSeparatelySelectedFolders() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let monDir = root.appendingPathComponent("99 Monster")
+        let imgDir = root.appendingPathComponent("99 Bilder")
+        try FileManager.default.createDirectory(at: monDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: imgDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        try """
+        ---
+        name: Steinriese
+        rk: 17
+        tp: 126 (11W12+55)
+        hg: 8
+        ---
+
+        ![[Steinriese (Token).webp|378]]
+        """.write(to: monDir.appendingPathComponent("Steinriese.md"), atomically: true, encoding: .utf8)
+
+        let img = NSImage(size: NSSize(width: 40, height: 40))
+        img.lockFocus(); NSColor.systemBrown.setFill(); NSRect(x: 0, y: 0, width: 40, height: 40).fill(); img.unlockFocus()
+        let png = NSBitmapImageRep(data: img.tiffRepresentation!)!.representation(using: .png, properties: [:])!
+        try png.write(to: imgDir.appendingPathComponent("Steinriese (Token).webp"))
+
+        let store = PlannerStore(fileURL: root.appendingPathComponent("state.json"), load: false)
+        // Bewusst als zwei getrennte URLs übergeben, NICHT der gemeinsame Elternordner —
+        // genau das muss die Mehrfachauswahl im Ordner-Dialog jetzt ermöglichen.
+        store.importMonsterURLs([monDir, imgDir])
+
+        let template = store.state.monsterDatabase.first { $0.name == "Steinriese" }
+        XCTAssertNotNil(template, "Monster muss importiert sein")
+        XCTAssertTrue(waitForToken(template?.id), "Token aus separat ausgewähltem Bilderordner muss aufgelöst werden")
+
+        if let id = template?.id { TokenStore.shared.remove(id) }
     }
 }
