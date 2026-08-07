@@ -17,11 +17,23 @@ public final class TokenStore: @unchecked Sendable {
     private let maxSide: CGFloat = 256
 
     private init() {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        self.dir = Self.resolveBaseDirectory(subfolder: "Tokens")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+
+    /// Unter XCTest (`XCTestConfigurationFilePath` wird von Xcode für jeden Testlauf
+    /// gesetzt) landen Zwischenablagen NIE im echten Application-Support-Ordner des
+    /// Nutzers, sondern in einem Tmp-Verzeichnis. Ohne diese Weiche schreiben/löschen
+    /// Tests direkt im echten Token-Cache der installierten App.
+    static func resolveBaseDirectory(subfolder: String) -> URL {
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            return FileManager.default.temporaryDirectory
+                .appendingPathComponent("InitiativePlannerProMacTests", isDirectory: true)
+                .appendingPathComponent(subfolder, isDirectory: true)
+        }
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("InitiativePlannerProMac", isDirectory: true)
-            .appendingPathComponent("Tokens", isDirectory: true)
-        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        self.dir = base
+            .appendingPathComponent(subfolder, isDirectory: true)
     }
 
     private func url(for id: String) -> URL {

@@ -15,11 +15,8 @@ public final class PlayerImageStore: @unchecked Sendable {
     private let maxSide: CGFloat = 256
 
     private init() {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("InitiativePlannerProMac", isDirectory: true)
-            .appendingPathComponent("PlayerImages", isDirectory: true)
-        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        self.dir = base
+        self.dir = TokenStore.resolveBaseDirectory(subfolder: "PlayerImages")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     }
 
     private func url(for id: UUID) -> URL { dir.appendingPathComponent(id.uuidString + ".png") }
