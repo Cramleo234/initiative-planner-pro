@@ -138,6 +138,8 @@ struct ContentView: View {
     @State private var showingStatusLibrary = false
     @State private var selectedStatusCreature: Creature?
     @State private var encounterName = ""
+    @State private var showingPlayerEditor = false
+    @State private var editingPlayer: PlayerTemplate?
 
     var body: some View {
         ZStack {
@@ -159,6 +161,12 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingStatusLibrary) { StatusLibraryView() }
+        .sheet(isPresented: $showingPlayerEditor) {
+            PlayerEditorDialog(template: editingPlayer) { template in
+                store.savePlayerTemplate(template)
+                showingPlayerEditor = false
+            }
+        }
         .sheet(item: $selectedStatusCreature) { creature in StatusPickerView(creature: creature) }
         // Konzentrations-Erinnerung: erscheint automatisch, wenn ein konzentrierender
         // Kämpfer Schaden erleidet (SG 10 oder halber Schaden — der höhere Wert).
@@ -203,6 +211,8 @@ struct ContentView: View {
                     CombatDashboard(selectedStatusCreature: $selectedStatusCreature)
                 case .database:
                     DatabaseView(showingImport: $showingImport, showingMonsterEditor: $showingMonsterEditor, editingMonster: $editingMonster)
+                case .players:
+                    PlayerDatabaseView(showingPlayerEditor: $showingPlayerEditor, editingPlayer: $editingPlayer)
                 case .encounters:
                     EncounterView(encounterName: $encounterName)
                 case .statuses:
@@ -217,12 +227,13 @@ struct ContentView: View {
 }
 
 enum PlannerTab: String, CaseIterable, Identifiable {
-    case combat, database, encounters, statuses, log
+    case combat, database, players, encounters, statuses, log
     var id: String { rawValue }
     var label: String {
         switch self {
         case .combat: return "Kampf"
         case .database: return "Monster"
+        case .players: return "Spieler"
         case .encounters: return "Encounters"
         case .statuses: return "Status"
         case .log: return "Protokoll"
@@ -232,6 +243,7 @@ enum PlannerTab: String, CaseIterable, Identifiable {
         switch self {
         case .combat: return "bolt.fill"
         case .database: return "books.vertical.fill"
+        case .players: return "person.crop.circle.fill"
         case .encounters: return "tray.full.fill"
         case .statuses: return "sparkles.rectangle.stack.fill"
         case .log: return "scroll.fill"
@@ -596,11 +608,26 @@ struct CreatureCard: View {
         return store.state.monsterDatabase.first { $0.id == sourceID }?.statblock
     }
 
+    /// Bild-Miniatur auf der Kampfkarte: Spielerbild (falls vorhanden) oder Monster-Token.
+    var cardImage: NSImage? {
+        creature.kind == .player
+            ? PlayerImageStore.shared.image(for: creature.sourcePlayerImageID ?? creature.sourcePlayerID)
+            : TokenStore.shared.image(for: creature.sourceMonsterID)
+    }
+
     var body: some View {
         let theme = store.theme
         let isActive = creature.id == store.state.activeID
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
+                if let cardImage {
+                    Image(nsImage: cardImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 30, height: 30)
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(theme.cardBorder, lineWidth: 1))
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(creature.kind.emoji) \(creature.name)")
                         .font(.system(size: 16, weight: .bold))
@@ -2317,11 +2344,15 @@ struct RingToken: View {
         let theme = store.theme
         let initial = String(creature.name.prefix(1)).uppercased()
         let diameter: CGFloat = isActive ? 72 : 60
-        let token = TokenStore.shared.image(for: creature.sourceMonsterID)
+        // Spielerbild (falls in der Spielerdatenbank hinterlegt) oder Monster-Token
+        // aus der Markdown-Datei — kein zusätzliches Klassen-/Monster-Symbol mehr,
+        // damit die Spieleransicht am Beamer aufgeräumt bleibt.
+        let token = creature.kind == .player
+            ? PlayerImageStore.shared.image(for: creature.sourcePlayerImageID ?? creature.sourcePlayerID)
+            : TokenStore.shared.image(for: creature.sourceMonsterID)
         VStack(spacing: 5) {
             ZStack {
                 if let token {
-                    // Token-Bild aus der Monster-Markdown (falls importiert)
                     Image(nsImage: token)
                         .resizable()
                         .scaledToFill()
@@ -2342,12 +2373,6 @@ struct RingToken: View {
                         .font(.system(size: isActive ? 27 : 23, weight: .black, design: .rounded))
                         .foregroundStyle(isActive ? theme.accentContrast : .primary)
                 }
-                // Typ-Symbol klein am Rand des Tokens
-                Text(creature.kind.emoji)
-                    .font(.system(size: 13))
-                    .padding(3)
-                    .background(.regularMaterial, in: Circle())
-                    .offset(x: 22, y: 22)
             }
             .frame(width: diameter, height: diameter)
             .overlay(Circle().strokeBorder(

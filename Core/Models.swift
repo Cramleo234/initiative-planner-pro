@@ -78,8 +78,13 @@ public struct Creature: Identifiable, Codable, Equatable {
     public var statuses: [StatusInstance]
     public var notes: String
     public var sourceMonsterID: String?
+    /// Herkunfts-Spielervorlage, falls dieser Kämpfer aus der Spielerdatenbank übernommen wurde.
+    public var sourcePlayerID: UUID?
+    /// Bildversion, die zum Übernahmezeitpunkt aktiv war (Snapshot). `updatePlayerTemplate`
+    /// hält dieses Feld bei aktiven Kämpfern zusätzlich live synchron.
+    public var sourcePlayerImageID: UUID?
 
-    public init(id: UUID = UUID(), name: String, kind: CreatureKind, armorClass: Int = 10, hitPoints: Int = 0, maxHitPoints: Int? = nil, temporaryHitPoints: Int = 0, initiativeBonus: Int = 0, currentInitiative: Int? = nil, tieBreak: Int? = nil, deathSaveSuccesses: Int? = nil, deathSaveFailures: Int? = nil, statuses: [StatusInstance] = [], notes: String = "", sourceMonsterID: String? = nil) {
+    public init(id: UUID = UUID(), name: String, kind: CreatureKind, armorClass: Int = 10, hitPoints: Int = 0, maxHitPoints: Int? = nil, temporaryHitPoints: Int = 0, initiativeBonus: Int = 0, currentInitiative: Int? = nil, tieBreak: Int? = nil, deathSaveSuccesses: Int? = nil, deathSaveFailures: Int? = nil, statuses: [StatusInstance] = [], notes: String = "", sourceMonsterID: String? = nil, sourcePlayerID: UUID? = nil, sourcePlayerImageID: UUID? = nil) {
         self.id = id
         self.name = name
         self.kind = kind
@@ -95,6 +100,8 @@ public struct Creature: Identifiable, Codable, Equatable {
         self.statuses = statuses
         self.notes = notes
         self.sourceMonsterID = sourceMonsterID
+        self.sourcePlayerID = sourcePlayerID
+        self.sourcePlayerImageID = sourcePlayerImageID
     }
 
     public var initiativeIsSet: Bool { currentInitiative != nil }
@@ -208,6 +215,30 @@ public struct MonsterTemplate: Identifiable, Codable, Equatable {
     }
 }
 
+/// Dauerhaft gespeicherte Spielervorlage. Nur `name` ist Pflicht — RK/TP/Ini/Bild/Notizen
+/// dürfen leer bleiben; sichere Startwerte (RK 10, TP 0, Ini 0) werden erst beim Erzeugen
+/// eines Kampf-Kämpfers eingesetzt, die Vorlage selbst zeigt weiterhin „nicht gesetzt“.
+public struct PlayerTemplate: Identifiable, Codable, Equatable {
+    public var id: UUID
+    public var name: String
+    public var armorClass: Int?
+    public var maxHitPoints: Int?
+    public var initiativeBonus: Int?
+    public var notes: String
+    /// Aktuelle Bildversion (siehe PlayerImageStore) — getrennt vom Monster-Token-Zyklus.
+    public var imageID: UUID?
+
+    public init(id: UUID = UUID(), name: String, armorClass: Int? = nil, maxHitPoints: Int? = nil, initiativeBonus: Int? = nil, notes: String = "", imageID: UUID? = nil) {
+        self.id = id
+        self.name = name
+        self.armorClass = armorClass
+        self.maxHitPoints = maxHitPoints
+        self.initiativeBonus = initiativeBonus
+        self.notes = notes
+        self.imageID = imageID
+    }
+}
+
 public struct Encounter: Identifiable, Codable, Equatable {
     public var id: UUID
     public var name: String
@@ -245,11 +276,19 @@ public struct LogEntry: Identifiable, Codable, Equatable {
 }
 
 public struct PlannerState: Codable, Equatable {
+    /// Schema 1 = Stand vor der Spielerdatenbank. Schema 2 fügt additiv `playerDatabase`
+    /// sowie `sourcePlayerID`/`sourcePlayerImageID` an `Creature` hinzu. Schema-1-Dateien
+    /// werden weiterhin gelesen (siehe `init(from:)`); gespeichert wird immer als Schema 2.
+    public static let currentSchemaVersion = 2
+
+    public var schemaVersion: Int
     public var players: [Creature]
     public var monsters: [Creature]
     public var round: Int
     public var activeID: UUID?
     public var monsterDatabase: [MonsterTemplate]
+    /// Dauerhafte Spielervorlagen — unabhängig vom aktuellen Kampf (siehe PlayerTemplate).
+    public var playerDatabase: [PlayerTemplate]
     public var encounters: [Encounter]
     public var statuses: [StatusDefinition]
     public var hpMode: HPMode
@@ -259,18 +298,44 @@ public struct PlannerState: Codable, Equatable {
 
     // Die Monsterdatenbank ist ab Werk bewusst LEER: Die App wird ohne
     // Regelwerks-Inhalte ausgeliefert; Nutzer importieren ihre eigene Sammlung.
-    public init(players: [Creature] = [], monsters: [Creature] = [], round: Int = 1, activeID: UUID? = nil, monsterDatabase: [MonsterTemplate] = [], encounters: [Encounter] = [], statuses: [StatusDefinition] = StatusDefinition.defaults, hpMode: HPMode = .average, keepDatabaseOpen: Bool = true, selectedTheme: String = "glass", log: [LogEntry] = []) {
+    public init(players: [Creature] = [], monsters: [Creature] = [], round: Int = 1, activeID: UUID? = nil, monsterDatabase: [MonsterTemplate] = [], playerDatabase: [PlayerTemplate] = [], encounters: [Encounter] = [], statuses: [StatusDefinition] = StatusDefinition.defaults, hpMode: HPMode = .average, keepDatabaseOpen: Bool = true, selectedTheme: String = "glass", log: [LogEntry] = []) {
+        self.schemaVersion = Self.currentSchemaVersion
         self.players = players
         self.monsters = monsters
         self.round = round
         self.activeID = activeID
         self.monsterDatabase = monsterDatabase
+        self.playerDatabase = playerDatabase
         self.encounters = encounters
         self.statuses = statuses
         self.hpMode = hpMode
         self.keepDatabaseOpen = keepDatabaseOpen
         self.selectedTheme = selectedTheme
         self.log = log
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case schemaVersion, players, monsters, round, activeID, monsterDatabase, playerDatabase, encounters, statuses, hpMode, keepDatabaseOpen, selectedTheme, log
+    }
+
+    /// Migrationspunkt Schema 1 → 2: fehlt `schemaVersion` oder `playerDatabase` (alte Datei),
+    /// werden sie additiv mit sicheren Leerwerten ergänzt. Wird als Schema 2 zurückgeschrieben,
+    /// sobald der nächste Speichervorgang läuft.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try c.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
+        players = try c.decode([Creature].self, forKey: .players)
+        monsters = try c.decode([Creature].self, forKey: .monsters)
+        round = try c.decode(Int.self, forKey: .round)
+        activeID = try c.decodeIfPresent(UUID.self, forKey: .activeID)
+        monsterDatabase = try c.decode([MonsterTemplate].self, forKey: .monsterDatabase)
+        playerDatabase = try c.decodeIfPresent([PlayerTemplate].self, forKey: .playerDatabase) ?? []
+        encounters = try c.decode([Encounter].self, forKey: .encounters)
+        statuses = try c.decode([StatusDefinition].self, forKey: .statuses)
+        hpMode = try c.decode(HPMode.self, forKey: .hpMode)
+        keepDatabaseOpen = try c.decode(Bool.self, forKey: .keepDatabaseOpen)
+        selectedTheme = try c.decode(String.self, forKey: .selectedTheme)
+        log = try c.decode([LogEntry].self, forKey: .log)
     }
 }
 
