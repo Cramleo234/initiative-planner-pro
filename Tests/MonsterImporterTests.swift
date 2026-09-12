@@ -277,7 +277,7 @@ final class FolderImportTests: XCTestCase {
         try "name: Falsch\nrk: 10\ntp: 5".write(to: tmp.appendingPathComponent("ignoriert.txt"), atomically: true, encoding: .utf8)
 
         let store = PlannerStore(fileURL: tmp.appendingPathComponent("state.json"), load: false)
-        store.importMonsterFolder(tmp)
+        store.importMonsterURLs([tmp])
 
         XCTAssertTrue(store.state.monsterDatabase.contains { $0.name == "Höhlentroll" })
         XCTAssertTrue(store.state.monsterDatabase.contains { $0.name == "Nebelgeist" }, "Unterordner müssen rekursiv durchsucht werden")

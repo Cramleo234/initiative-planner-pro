@@ -90,36 +90,12 @@ public final class TokenStore: @unchecked Sendable {
     @discardableResult
     public func store(imageAt source: URL, for id: String) -> Bool {
         guard ensureLocallyAvailable(source) else { return false }
-        guard let img = NSImage(contentsOf: source), let png = downscaledPNG(img) else { return false }
+        guard let img = NSImage(contentsOf: source), let png = downscaledImagePNG(img, maxSide: maxSide) else { return false }
         do {
             try png.write(to: url(for: id))
             lock.lock(); memoryCache[id] = NSImage(data: png); lock.unlock()
             return true
         } catch { return false }
-    }
-
-    private func downscaledPNG(_ image: NSImage) -> Data? {
-        // Bewusst `image.size` statt der rohen Pixelmaße aus `tiffRepresentation` — siehe
-        // PlayerImageStore.downscaledPNG für die ausführliche Begründung (DPI-Metadaten
-        // können `image.size` von den rohen Pixelmaßen abweichen lassen, was sonst nur
-        // einen Teilausschnitt zeichnet und den Rest transparent lässt).
-        let size = image.size
-        let w = size.width, h = size.height
-        guard w > 0, h > 0 else { return nil }
-        let scale = min(1, maxSide / max(w, h))
-        let tw = max(1, Int(w * scale)), th = max(1, Int(h * scale))
-        guard let out = NSBitmapImageRep(
-            bitmapDataPlanes: nil, pixelsWide: tw, pixelsHigh: th,
-            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
-        out.size = NSSize(width: tw, height: th)
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
-        image.draw(in: NSRect(x: 0, y: 0, width: tw, height: th),
-                   from: NSRect(x: 0, y: 0, width: w, height: h),
-                   operation: .copy, fraction: 1)
-        NSGraphicsContext.restoreGraphicsState()
-        return out.representation(using: .png, properties: [:])
     }
 
     /// Entfernt ein einzelnes Token aus dem Cache.

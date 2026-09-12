@@ -144,11 +144,20 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             LiquidBackground(theme: store.theme)
+            // Rechte Pfeiltaste als zweite Tastenkombination für „Nächster Zug“ — symmetrisch
+            // zur linken Pfeiltaste bei „Vorheriger Zug“ (Menü „Kampf“). Bewusst als unsichtbarer
+            // Button statt eines zusätzlichen Menüeintrags, damit „Nächster Zug“ nicht doppelt im
+            // Menü auftaucht; Leertaste bleibt dort der sichtbare Haupteintrag.
+            Button("") { store.nextTurn() }
+                .keyboardShortcut(.rightArrow, modifiers: [])
+                .frame(width: 0, height: 0)
+                .opacity(0)
+                .accessibilityHidden(true)
             VStack(spacing: 0) {
                 InitiativeRail(selection: $selection)
                 Divider().opacity(0.18)
                 HStack(spacing: 0) {
-                    Sidebar(selection: $selection, showingImport: $showingImport)
+                    Sidebar(selection: $selection)
                     mainPanel
                 }
             }
@@ -204,24 +213,32 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var mainPanel: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                switch selection {
-                case .combat:
-                    CombatDashboard(selectedStatusCreature: $selectedStatusCreature)
-                case .database:
-                    DatabaseView(showingImport: $showingImport, showingMonsterEditor: $showingMonsterEditor, editingMonster: $editingMonster)
-                case .players:
-                    PlayerDatabaseView(showingPlayerEditor: $showingPlayerEditor, editingPlayer: $editingPlayer)
-                case .encounters:
-                    EncounterView(encounterName: $encounterName)
-                case .statuses:
-                    StatusLibraryView(embedded: true)
-                case .log:
-                    LogView()
+        switch selection {
+        case .database:
+            // Eigenes Layout statt der gemeinsamen ScrollView: Suchfeld/Filter/Aktionen bleiben
+            // oben fixiert, nur die (potenziell sehr lange) Monsterliste scrollt darunter — sonst
+            // verschwindet das Suchfeld beim Scrollen mit aus dem Bild.
+            DatabaseView(showingImport: $showingImport, showingMonsterEditor: $showingMonsterEditor, editingMonster: $editingMonster)
+        default:
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    switch selection {
+                    case .combat:
+                        CombatDashboard(selectedStatusCreature: $selectedStatusCreature)
+                    case .players:
+                        PlayerDatabaseView(showingPlayerEditor: $showingPlayerEditor, editingPlayer: $editingPlayer)
+                    case .encounters:
+                        EncounterView(encounterName: $encounterName)
+                    case .statuses:
+                        StatusLibraryView(embedded: true)
+                    case .log:
+                        LogView()
+                    case .database:
+                        EmptyView() // behandelt im .database-Zweig oben
+                    }
                 }
+                .padding(22)
             }
-            .padding(22)
         }
     }
 }
@@ -254,7 +271,6 @@ enum PlannerTab: String, CaseIterable, Identifiable {
 struct Sidebar: View {
     @EnvironmentObject private var store: PlannerStore
     @Binding var selection: PlannerTab
-    @Binding var showingImport: Bool
 
     var body: some View {
         let theme = store.theme
@@ -292,18 +308,9 @@ struct Sidebar: View {
 
             Spacer()
 
-            GlassCard {
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Import ist dauerhaft", systemImage: "internaldrive.fill")
-                        .font(.headline)
-                    Text("Importierte Monster werden sofort in der App-Datenbank gespeichert. Kein erneutes Laden, keine JSON-Importwege.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Button { showingImport = true } label: { Label("Monster importieren", systemImage: "square.and.arrow.down.fill") }
-                        .buttonStyle(.borderedProminent)
-                        .tint(theme.accent)
-                }
-            }
+            // Kein eigener Import-Einstieg mehr hier — der Import gehört zur Monster-
+            // Datenbank und lebt ausschließlich im „Monster“-Tab, statt an zwei Stellen
+            // gleichzeitig sichtbar zu sein.
 
             // Nur die Version — der Copyright-Vermerk hat seinen macOS-üblichen
             // Platz im Über-Dialog (aus der Info.plist).
@@ -504,6 +511,7 @@ struct CombatDashboard: View {
                         SectionHeader(title: "Kämpfer hinzufügen", subtitle: "Spieler oder Monster manuell erstellen", icon: "plus.circle.fill")
                         HStack {
                             TextField("Name", text: $name)
+                                .onSubmit(addCreature)
                             Picker("Typ", selection: $kind) {
                                 ForEach(CreatureKind.allCases) { Text($0.label).tag($0) }
                             }.pickerStyle(.segmented)
@@ -511,16 +519,15 @@ struct CombatDashboard: View {
                         HStack {
                             Stepper("RK \(ac)", value: $ac, in: 1...40)
                             TextField("HP oder Würfel", text: $hp)
+                                .onSubmit(addCreature)
                             Stepper("Ini \(bonus >= 0 ? "+" : "")\(bonus)", value: $bonus, in: -10...20)
                             TextField("Initiative sofort", text: $initiative)
+                                .onSubmit(addCreature)
                         }
                         HStack {
-                            Button("Hinzufügen") {
-                                store.addCreature(name: name, kind: kind, armorClass: ac, hpExpression: hp, initiativeBonus: bonus, initiative: Int(initiative))
-                                name = ""; hp = ""; initiative = ""; ac = 10; bonus = 0
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(store.theme.accent)
+                            Button("Hinzufügen", action: addCreature)
+                                .buttonStyle(.borderedProminent)
+                                .tint(store.theme.accent)
                             Button("Leeren") { name = ""; hp = ""; initiative = ""; ac = 10; bonus = 0 }
                         }
                     }
@@ -531,6 +538,12 @@ struct CombatDashboard: View {
             CreatureSection(title: "Spieler", creatures: store.state.players, selectedStatusCreature: $selectedStatusCreature)
             CreatureSection(title: "Monster", creatures: store.state.monsters.sorted { ($0.currentInitiative ?? -999) > ($1.currentInitiative ?? -999) }, selectedStatusCreature: $selectedStatusCreature)
         }
+    }
+
+    /// Von „Hinzufügen“ und vom Enter in Name-/HP-/Initiative-Feld gleichermaßen genutzt.
+    private func addCreature() {
+        store.addCreature(name: name, kind: kind, armorClass: ac, hpExpression: hp, initiativeBonus: bonus, initiative: Int(initiative))
+        name = ""; hp = ""; initiative = ""; ac = 10; bonus = 0
     }
 }
 
@@ -676,11 +689,14 @@ struct CreatureCard: View {
             }
             HStack {
                 TextField("Schaden/Heilung (12 oder 2d6+3)", text: $damage)
+                    // Enter = Schaden, die im Kampf häufigere Aktion; Heilung bleibt ein Klick.
+                    .onSubmit { store.applyDamage(creature.id, expression: damage); damage = "" }
                 Button("Schaden") { store.applyDamage(creature.id, expression: damage); damage = "" }
                 Button("Heilung") { store.applyHealing(creature.id, expression: damage); damage = "" }
             }
             HStack {
                 TextField("Temp HP", text: $temp)
+                    .onSubmit { store.setTemporaryHP(creature.id, amount: Int(temp) ?? 0); temp = "" }
                 Button("Temp setzen") { store.setTemporaryHP(creature.id, amount: Int(temp) ?? 0); temp = "" }
                 TextField("Initiative", text: $initiative)
                     .onSubmit { store.setInitiative(creature.id, initiative: Int(initiative)) }
@@ -1085,13 +1101,18 @@ struct DatabaseView: View {
             } else if filtered.isEmpty {
                 EmptyState(text: "Keine Monster gefunden.")
             } else {
-                LazyVStack(spacing: 7) {
-                    ForEach(filtered) { monster in
-                        MonsterDBRow(monster: monster, quantity: quantity, showingMonsterEditor: $showingMonsterEditor, editingMonster: $editingMonster)
+                // Eigene ScrollView nur für die Zeilen: Kopf mit Suchfeld/Filtern/Aktionen bleibt
+                // dadurch beim Scrollen durch lange Listen sichtbar, statt mit aus dem Bild zu wandern.
+                ScrollView {
+                    LazyVStack(spacing: 7) {
+                        ForEach(filtered) { monster in
+                            MonsterDBRow(monster: monster, quantity: quantity, showingMonsterEditor: $showingMonsterEditor, editingMonster: $editingMonster)
+                        }
                     }
                 }
             }
         }
+        .padding(22)
         // Drag & Drop: .md-Dateien und Ordner aus dem Finder direkt hier ablegen.
         .dropDestination(for: URL.self) { urls, _ in
             store.importMonsterURLs(urls)
@@ -1435,6 +1456,7 @@ struct EncounterView: View {
                 SectionHeader(title: "Encounter Management", subtitle: "Benannte Spielstände, intern gespeichert", icon: "tray.full.fill")
                 HStack {
                     TextField("Encounter Name", text: $encounterName)
+                        .onSubmit { store.saveEncounter(name: encounterName); encounterName = "" }
                     Button("Speichern") { store.saveEncounter(name: encounterName); encounterName = "" }
                         .buttonStyle(.borderedProminent)
                         .tint(store.theme.accent)
@@ -2033,29 +2055,9 @@ struct MonsterImportView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeader(title: "Monster importieren", subtitle: "Einmal importieren – danach dauerhaft in der App", icon: "square.and.arrow.down.fill")
-            Text("Unterstützt .txt/.md mit Markdown-Frontmatter oder einfachen Schlüssel/Wert-Blöcken: name, rk/ac, tp/hp, hg/cr, initiative, typ.")
+            Text("Unterstützt .txt/.md mit Markdown-Frontmatter oder einfachen Schlüssel/Wert-Blöcken: name, rk/ac, tp/hp, hg/cr, initiative, typ. Für ganze Ordner (inkl. Unterordner) den „Ordner“-Button in der Monster-Datenbank verwenden.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-
-            // Ordner-Import: rekursiv, nur Dateien mit passenden Monster-Werten
-            HStack(spacing: 10) {
-                Button {
-                    presentMonsterFolderPicker(store: store)
-                    dismiss()
-                } label: {
-                    Label("Ordner importieren (inkl. aller Unterordner)", systemImage: "folder.badge.plus")
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(store.theme.accent)
-                Text("Zieht alle passenden .md-Dateien aus dem Ordner und seinen Unterordnern — Notizen ohne Monster-Werte werden übersprungen.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(store.theme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .strokeBorder(store.theme.accent.opacity(0.3), lineWidth: 1))
 
             HStack { TextField("Quelle/Name", text: $sourceName); Button(".txt/.md wählen") { importingFile = true } }
             TextEditor(text: $importText)

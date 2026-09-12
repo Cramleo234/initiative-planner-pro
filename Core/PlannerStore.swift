@@ -577,12 +577,6 @@ public final class PlannerStore: ObservableObject {
         } catch { notice(error.localizedDescription, style: "error") }
     }
 
-    /// Rekursiver Ordner-Import: durchsucht den Ordner und alle Unterordner nach
-    /// .md-Dateien mit erkennbaren Monster-Werten und importiert alle Treffer dauerhaft.
-    public func importMonsterFolder(_ folderURL: URL) {
-        importMonsterURLs([folderURL])
-    }
-
     /// Legt die Token-Bilder im Hintergrund an und meldet den Fortschritt.
     ///
     /// Bewusst NICHT auf dem Main-Actor: Die Bilder liegen meist in einem

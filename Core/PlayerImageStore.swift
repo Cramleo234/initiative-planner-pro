@@ -44,38 +44,11 @@ public final class PlayerImageStore: @unchecked Sendable {
     /// herunter und legt es unter der übergebenen Bildversions-UUID ab.
     @discardableResult
     public func store(image: NSImage, as id: UUID) -> Bool {
-        guard let png = downscaledPNG(image) else { return false }
+        guard let png = downscaledImagePNG(image, maxSide: maxSide) else { return false }
         do {
             try png.write(to: url(for: id))
             lock.lock(); memoryCache[id] = NSImage(data: png); lock.unlock()
             return true
         } catch { return false }
-    }
-
-    private func downscaledPNG(_ image: NSImage) -> Data? {
-        // Bewusst `image.size` statt der rohen Pixelmaße aus `tiffRepresentation`:
-        // Fotos mit abweichender DPI-Metadate (z. B. von Handykameras oder nach einem
-        // Export) haben eine `image.size`, die von den rohen Pixelmaßen abweicht — genau
-        // der Koordinatenraum, den `NSImage.draw(in:from:)` für die `from`-Rect erwartet.
-        // Wird stattdessen mit den rohen Pixelmaßen gearbeitet, zeichnet Cocoa nur einen
-        // Teilausschnitt und lässt den Rest der Zielfläche transparent (das genaue Bild,
-        // das zuvor als „nicht richtig angezeigt“ gemeldete Spielerbilder erzeugt hat).
-        let size = image.size
-        let w = size.width, h = size.height
-        guard w > 0, h > 0 else { return nil }
-        let scale = min(1, maxSide / max(w, h))
-        let tw = max(1, Int(w * scale)), th = max(1, Int(h * scale))
-        guard let out = NSBitmapImageRep(
-            bitmapDataPlanes: nil, pixelsWide: tw, pixelsHigh: th,
-            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
-        out.size = NSSize(width: tw, height: th)
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
-        image.draw(in: NSRect(x: 0, y: 0, width: tw, height: th),
-                   from: NSRect(x: 0, y: 0, width: w, height: h),
-                   operation: .copy, fraction: 1)
-        NSGraphicsContext.restoreGraphicsState()
-        return out.representation(using: .png, properties: [:])
     }
 }

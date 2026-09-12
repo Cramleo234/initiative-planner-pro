@@ -16,11 +16,13 @@
 		918003D40DA857A27E4BA880 /* MonsterImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7DEBDB94877FB104C076CB /* MonsterImporterTests.swift */; };
 		9CB050E424741D778BB84D5C /* PlayerDatabaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E43A885A1E53E8D23EAC241F /* PlayerDatabaseView.swift */; };
 		AC95B3127477551A830D4E81 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 940234F0DD15E46A4A6EF932 /* Assets.xcassets */; };
+		B06EC688A53C09CDAB548ED8 /* ImageDownscaling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FA318E477F53D2A97CAFF8 /* ImageDownscaling.swift */; };
 		C7ECDF026A3FEF99B063FBE6 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F5D50A074E7E7954A5E6DF /* TokenStore.swift */; };
 		CA0817A6AD55741E39C0DC0D /* PlayerDatabaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40F02E6BCD4AA330027C6D43 /* PlayerDatabaseTests.swift */; };
 		D13F474298452A9C63DDEA10 /* DiceRoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96877E6A1FB045AAB660572 /* DiceRoller.swift */; };
 		DDC4C8B0AC5FC9A95E39638E /* DiceRoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96877E6A1FB045AAB660572 /* DiceRoller.swift */; };
 		E1778BFCA0ADA36C966ECB68 /* MonsterImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */; };
+		E39D2E349ED545C6D13D1CFE /* ImageDownscaling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FA318E477F53D2A97CAFF8 /* ImageDownscaling.swift */; };
 		E917C47A7639C258F4998AF2 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F5D50A074E7E7954A5E6DF /* TokenStore.swift */; };
 		E9A47F3C3F6DCBC25364613C /* PlayerImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA9450A940562EA1BD566E7 /* PlayerImageStore.swift */; };
 		EA3163B20DC54F6B74E9E7B9 /* PlannerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A586DC1D27820122C3226C2E /* PlannerStore.swift */; };
@@ -30,6 +32,7 @@
 
 /* Begin PBXFileReference section */
 		11C7A135E08920CF7E9D323B /* DiceRollerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollerTests.swift; sourceTree = "<group>"; };
+		11FA318E477F53D2A97CAFF8 /* ImageDownscaling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDownscaling.swift; sourceTree = "<group>"; };
 		3F77A380C13AEF80C1601D72 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		40F02E6BCD4AA330027C6D43 /* PlayerDatabaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDatabaseTests.swift; sourceTree = "<group>"; };
 		47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -62,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				E96877E6A1FB045AAB660572 /* DiceRoller.swift */,
+				11FA318E477F53D2A97CAFF8 /* ImageDownscaling.swift */,
 				47533D8BE7CBA3BA2F9FC2F1 /* Models.swift */,
 				9265D6C5D39E5FBB0FA5DBCA /* MonsterImporter.swift */,
 				A586DC1D27820122C3226C2E /* PlannerStore.swift */,
@@ -194,6 +198,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D13F474298452A9C63DDEA10 /* DiceRoller.swift in Sources */,
+				E39D2E349ED545C6D13D1CFE /* ImageDownscaling.swift in Sources */,
 				070D1D9E8305ADD771A3857B /* InitiativePlannerProMacApp.swift in Sources */,
 				8768C62804E1A1D127DB19CB /* Models.swift in Sources */,
 				4B49E4D268FDCEE55E3E2FFF /* MonsterImporter.swift in Sources */,
@@ -211,6 +216,7 @@
 			files = (
 				DDC4C8B0AC5FC9A95E39638E /* DiceRoller.swift in Sources */,
 				71237619EA6157ABA016F3F5 /* DiceRollerTests.swift in Sources */,
+				B06EC688A53C09CDAB548ED8 /* ImageDownscaling.swift in Sources */,
 				EB0E880A6CF074931362862F /* Models.swift in Sources */,
 				E1778BFCA0ADA36C966ECB68 /* MonsterImporter.swift in Sources */,
 				918003D40DA857A27E4BA880 /* MonsterImporterTests.swift in Sources */,
