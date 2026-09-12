@@ -17,7 +17,9 @@ ein **eigener Tap** (ein kleines GitHub-Repo mit der Cask-Formel) plus
 
 ## Pro Release (z. B. 0.8.8)
 
-1. Version in `App/Info.plist` und `project.yml` setzen; Icon-Badge neu generieren.
+1. Version in `App/Info.plist` und `project.yml` setzen. Das App-Icon trägt bewusst
+   keine Versionsnummer mehr (bis 1.2.x gab es einen Versions-Badge auf dem Icon —
+   der ist seit 1.3.0 entfernt, damit er nicht bei jedem Release veraltet).
 2. Release bauen und DMG erstellen (`InitiativePlannerPro-<version>.dmg`).
 3. SHA-256 berechnen: `shasum -a 256 InitiativePlannerPro-<version>.dmg`
 4. GitHub-Release erstellen und DMG anhängen:

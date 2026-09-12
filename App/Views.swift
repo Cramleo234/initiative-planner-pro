@@ -2130,25 +2130,43 @@ struct PlayerViewWindow: View {
         list.firstIndex { $0.id == store.state.activeID } ?? 0
     }
 
+    /// Referenzgröße, für die Ring/Tokens/Schrift ursprünglich entworfen wurden — entspricht
+    /// der minimalen Fenstergröße (siehe `WindowGroup("Player View", …).frame(minWidth: 900,
+    /// minHeight: 650)`). Der gesamte Inhalt wird unten per `scaleEffect` proportional auf die
+    /// tatsächlich verfügbare Fläche hochskaliert, statt bei fester Pixelgröße zu bleiben —
+    /// auf einem großen Zweitbildschirm/Beamer (der eigentliche Zweck dieser Ansicht) wirkten
+    /// Ring, Tokens und Text sonst winzig, obwohl reichlich Platz zur Verfügung steht.
+    private static let baseSize = CGSize(width: 900, height: 650)
+
     var body: some View {
         let theme = store.theme
-        ZStack {
-            LiquidBackground(theme: theme)
-            if list.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "dice")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.secondary)
-                    Text("Noch keine Initiative gesetzt.")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+        GeometryReader { outerGeo in
+            let scale = min(outerGeo.size.width / Self.baseSize.width, outerGeo.size.height / Self.baseSize.height)
+            ZStack {
+                LiquidBackground(theme: theme)
+                Group {
+                    if list.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "dice")
+                                .font(.system(size: 44))
+                                .foregroundStyle(.secondary)
+                            Text("Noch keine Initiative gesetzt.")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(width: Self.baseSize.width, height: Self.baseSize.height)
+                    } else {
+                        GeometryReader { geo in
+                            ringBody(in: geo, theme: theme)
+                        }
+                        .frame(width: Self.baseSize.width, height: Self.baseSize.height)
+                    }
+                    cornerChrome(theme: theme)
+                        .frame(width: Self.baseSize.width, height: Self.baseSize.height)
                 }
-            } else {
-                GeometryReader { geo in
-                    ringBody(in: geo, theme: theme)
-                }
+                .scaleEffect(scale)
             }
-            cornerChrome(theme: theme)
+            .frame(width: outerGeo.size.width, height: outerGeo.size.height)
         }
         .preferredColorScheme(theme.isDark ? .dark : .light)
         .onAppear {
