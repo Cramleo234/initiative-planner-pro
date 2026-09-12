@@ -381,6 +381,11 @@ public extension StatusDefinition {
             StatusDefinition(id: "blessed", label: "Gesegnet", short: "Seg", category: "good", priority: 2, polarity: .good, description: "Hilfreicher Bonus, z. B. durch den Zauber Segnen.", effects: [
                 "Typische Erinnerung: +1W4 auf Angriffswürfe und Rettungswürfe, solange der Effekt gilt."
             ], isOfficial: true),
+            StatusDefinition(id: "frenzy", label: "Kampfrausch", short: "Rausch", category: "good", priority: 2, polarity: .good, description: "Die Kreatur befindet sich im Kampfrausch — gesteigerte Aggressivität und Widerstandskraft im Nahkampf.", effects: [
+                "Vorteil bei Stärkewürfen und Stärke-Rettungswürfen.",
+                "Resistenz gegen Wucht-, Hieb- und Stichschaden.",
+                "Endet u. a., wenn die Kreatur eine Minute lang weder angreift noch Schaden erleidet."
+            ], isOfficial: true),
             StatusDefinition(id: "inspired", label: "Inspiriert", short: "Ins", category: "good", priority: 1, polarity: .good, description: "Hat Inspiration, Bardeninspiration oder einen vergleichbaren Bonus.", effects: [
                 "Als Marker für einen später einsetzbaren Bonus gedacht; genaue Wirkung hängt von der Quelle ab."
             ], isOfficial: true),

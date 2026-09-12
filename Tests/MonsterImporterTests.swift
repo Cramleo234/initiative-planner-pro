@@ -214,6 +214,28 @@ final class CombatLogicTests: XCTestCase {
         store.applyDamage(id, expression: "7")
         XCTAssertEqual(store.concentrationChecks.first?.dc, 10, "SG 10, wenn halber Schaden darunter liegt")
     }
+
+    func testMonsterAtHalfHPAutomaticallyGetsBloodiedAndLosesItWhenHealedAbove() {
+        let store = makeStore()
+        store.addCreature(name: "Oger", kind: .monster, armorClass: 11, hpExpression: "20", initiativeBonus: 0, initiative: nil)
+        let id = store.state.monsters[0].id
+        store.applyDamage(id, expression: "9")
+        XCTAssertFalse(store.state.monsters[0].statuses.contains { $0.id == "bloodied" }, "Über der Hälfte (11/20) noch nicht blutig")
+        store.applyDamage(id, expression: "1")
+        XCTAssertTrue(store.state.monsters[0].statuses.contains { $0.id == "bloodied" }, "Bei höchstens der Hälfte (10/20) automatisch blutig")
+        store.applyHealing(id, expression: "3")
+        XCTAssertFalse(store.state.monsters[0].statuses.contains { $0.id == "bloodied" }, "Wieder über der Hälfte (13/20) — Marker automatisch entfernt")
+    }
+
+    func testPlayerAtHalfHPAlsoAutomaticallyGetsBloodied() {
+        let store = makeStore()
+        store.addCreature(name: "Held", kind: .player, armorClass: 10, hpExpression: "20", initiativeBonus: 0, initiative: nil)
+        let id = store.state.players[0].id
+        store.applyDamage(id, expression: "9")
+        XCTAssertFalse(store.state.players[0].statuses.contains { $0.id == "bloodied" }, "Über der Hälfte (11/20) noch nicht blutig")
+        store.applyDamage(id, expression: "1")
+        XCTAssertTrue(store.state.players[0].statuses.contains { $0.id == "bloodied" }, "Bei höchstens der Hälfte (10/20) automatisch blutig — gilt für Spieler wie Monster")
+    }
 }
 
 @MainActor

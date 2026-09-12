@@ -2,21 +2,154 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// Öffnet einen synchronen Bild-Dialog und kopiert die Auswahl sofort unter einer neuen
-/// Bildversions-UUID in den PlayerImageStore. `runModal()` blockiert den kompletten
-/// Event-Loop, bis der Dialog geschlossen wird — eine zweite, überlappende Auswahl kann
-/// dadurch architekturbedingt nicht starten (kein Pendant zur Windows-Race-Condition nötig).
+/// Öffnet einen synchronen Bild-Dialog und lädt die Auswahl als `NSImage`, ohne sie
+/// bereits im PlayerImageStore abzulegen — der Bildausschnitt wird erst danach im
+/// `PlayerImageCropDialog` festgelegt. `runModal()` blockiert den kompletten Event-Loop,
+/// bis der Dialog geschlossen wird — eine zweite, überlappende Auswahl kann dadurch
+/// architekturbedingt nicht starten (kein Pendant zur Windows-Race-Condition nötig).
 @MainActor
-func presentPlayerImagePicker(store: PlannerStore) -> UUID? {
+func presentPlayerImageFilePicker() -> NSImage? {
     let panel = NSOpenPanel()
     panel.canChooseDirectories = false
     panel.canChooseFiles = true
     panel.allowsMultipleSelection = false
-    panel.allowedContentTypes = [.png, .jpeg, .webP]
+    // .heic bewusst dabei: das Standardformat von iPhone-Fotos — ohne es ließen sich
+    // die meisten direkt vom Handy stammenden Spielerbilder gar nicht erst auswählen.
+    panel.allowedContentTypes = [.png, .jpeg, .webP, .heic]
     panel.message = "Spielerbild auswählen"
     panel.prompt = "Auswählen"
     guard panel.runModal() == .OK, let url = panel.url else { return nil }
-    return store.storePlayerImage(at: url)
+    return NSImage(contentsOf: url)
+}
+
+/// Errechnet aus Zoom/Verschiebung im `PlayerImageCropDialog` den sichtbaren Ausschnitt
+/// im eigenen Koordinatenraum des Quellbilds — als Eingabe für `NSImage.draw(in:from:)`.
+///
+/// SwiftUIs Offset-Raum hat den Ursprung oben links (y wächst nach unten); AppKits
+/// `from`-Rect für `NSImage.draw` hat den Ursprung unten links (y wächst nach oben) — die
+/// Y-Achse muss deshalb explizit gespiegelt werden, sonst zeigt das gespeicherte Bild einen
+/// vertikal falsch positionierten Ausschnitt.
+func playerImageCropRect(imageSize: CGSize, previewSide: CGFloat, zoom: CGFloat, offset: CGSize) -> CGRect {
+    let baseScale = max(previewSide / imageSize.width, previewSide / imageSize.height)
+    let scale = baseScale * zoom
+    let displaySize = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+    let imageOriginInPreview = CGPoint(
+        x: (previewSide - displaySize.width) / 2 + offset.width,
+        y: (previewSide - displaySize.height) / 2 + offset.height)
+    let cropInDisplayTopLeft = CGRect(x: -imageOriginInPreview.x, y: -imageOriginInPreview.y,
+                                       width: previewSide, height: previewSide)
+    let cropInImageTopLeft = CGRect(x: cropInDisplayTopLeft.origin.x / scale,
+                                     y: cropInDisplayTopLeft.origin.y / scale,
+                                     width: cropInDisplayTopLeft.width / scale,
+                                     height: cropInDisplayTopLeft.height / scale)
+    let flippedY = imageSize.height - cropInImageTopLeft.origin.y - cropInImageTopLeft.height
+    return CGRect(x: cropInImageTopLeft.origin.x, y: flippedY,
+                   width: cropInImageTopLeft.width, height: cropInImageTopLeft.height)
+}
+
+/// Maximal erlaubte Verschiebung (in Vorschau-Punkten), damit der Bildausschnitt den
+/// sichtbaren Kreis immer vollständig deckt.
+func playerImageCropMaxOffset(imageSize: CGSize, previewSide: CGFloat, zoom: CGFloat) -> CGSize {
+    let baseScale = max(previewSide / imageSize.width, previewSide / imageSize.height)
+    let scale = baseScale * zoom
+    let displaySize = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+    return CGSize(width: max(0, (displaySize.width - previewSide) / 2),
+                  height: max(0, (displaySize.height - previewSide) / 2))
+}
+
+/// Dialog zum Zuschneiden eines Spielerbilds: Der Nutzer wählt per Ziehen und Zoomen den
+/// Bildausschnitt, der im runden Avatar erscheinen soll — statt eines automatischen,
+/// nicht beeinflussbaren Zuschnitts. `onConfirm` liefert das fertig zugeschnittene
+/// quadratische Bild in Originalqualität; die eigentliche Verkleinerung/Speicherung
+/// übernimmt weiterhin `PlayerImageStore`.
+struct PlayerImageCropDialog: View {
+    @Environment(\.dismiss) private var dismiss
+    var image: NSImage
+    var onConfirm: (NSImage) -> Void
+
+    @State private var zoom: CGFloat = 1
+    @State private var offset: CGSize = .zero
+    @State private var dragStartOffset: CGSize = .zero
+
+    private let previewSide: CGFloat = 280
+    private let outputSide: CGFloat = 512
+
+    private var maxOffset: CGSize {
+        playerImageCropMaxOffset(imageSize: image.size, previewSide: previewSide, zoom: zoom)
+    }
+
+    private func clamp(_ proposed: CGSize) -> CGSize {
+        let m = maxOffset
+        return CGSize(width: min(max(proposed.width, -m.width), m.width),
+                      height: min(max(proposed.height, -m.height), m.height))
+    }
+
+    private var displaySize: CGSize {
+        let baseScale = max(previewSide / image.size.width, previewSide / image.size.height)
+        let scale = baseScale * zoom
+        return CGSize(width: image.size.width * scale, height: image.size.height * scale)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionHeader(title: "Bildausschnitt wählen", subtitle: "Ziehen zum Verschieben, Regler zum Zoomen", icon: "crop")
+            ZStack {
+                Image(nsImage: image)
+                    .resizable()
+                    .frame(width: displaySize.width, height: displaySize.height)
+                    .offset(offset)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                let proposed = CGSize(width: dragStartOffset.width + value.translation.width,
+                                                       height: dragStartOffset.height + value.translation.height)
+                                offset = clamp(proposed)
+                            }
+                            .onEnded { _ in dragStartOffset = offset }
+                    )
+            }
+            .frame(width: previewSide, height: previewSide)
+            .clipShape(Circle())
+            .overlay(Circle().strokeBorder(.secondary.opacity(0.5), lineWidth: 1))
+            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, alignment: .center)
+            HStack(spacing: 10) {
+                Image(systemName: "minus.magnifyingglass").foregroundStyle(.secondary)
+                Slider(value: $zoom, in: 1...4)
+                Image(systemName: "plus.magnifyingglass").foregroundStyle(.secondary)
+            }
+            .onChange(of: zoom) { offset = clamp(offset) }
+            HStack {
+                Spacer()
+                Button("Abbrechen") { dismiss() }
+                Button("Übernehmen") {
+                    if let cropped = renderCroppedImage() { onConfirm(cropped) }
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(22)
+        .frame(width: 360)
+    }
+
+    private func renderCroppedImage() -> NSImage? {
+        let fromRect = playerImageCropRect(imageSize: image.size, previewSide: previewSide, zoom: zoom, offset: offset)
+        let side = Int(outputSide)
+        guard let out = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: side, pixelsHigh: side,
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+        out.size = NSSize(width: outputSide, height: outputSide)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
+        image.draw(in: NSRect(x: 0, y: 0, width: outputSide, height: outputSide),
+                   from: fromRect, operation: .copy, fraction: 1)
+        NSGraphicsContext.restoreGraphicsState()
+        let result = NSImage(size: NSSize(width: outputSide, height: outputSide))
+        result.addRepresentation(out)
+        return result
+    }
 }
 
 struct PlayerDatabaseView: View {
@@ -160,6 +293,8 @@ struct PlayerEditorDialog: View {
     @State private var initiativeBonusText = ""
     @State private var notes = ""
     @State private var pendingImageID: UUID?
+    @State private var imageToCrop: NSImage?
+    @State private var showingCropDialog = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -181,7 +316,10 @@ struct PlayerEditorDialog: View {
                 .overlay(Circle().strokeBorder(store.theme.cardBorder, lineWidth: 1))
                 VStack(alignment: .leading, spacing: 6) {
                     Button("Bild wählen…") {
-                        if let newID = presentPlayerImagePicker(store: store) { pendingImageID = newID }
+                        if let picked = presentPlayerImageFilePicker() {
+                            imageToCrop = picked
+                            showingCropDialog = true
+                        }
                     }
                     if pendingImageID != nil {
                         Button("Bild entfernen", role: .destructive) { pendingImageID = nil }
@@ -215,6 +353,13 @@ struct PlayerEditorDialog: View {
                 initiativeBonusText = template.initiativeBonus.map(String.init) ?? ""
                 notes = template.notes
                 pendingImageID = template.imageID
+            }
+        }
+        .sheet(isPresented: $showingCropDialog) {
+            if let imageToCrop {
+                PlayerImageCropDialog(image: imageToCrop) { cropped in
+                    if let newID = store.storePlayerImage(cropped) { pendingImageID = newID }
+                }
             }
         }
     }

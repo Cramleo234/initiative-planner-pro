@@ -99,11 +99,15 @@ public final class TokenStore: @unchecked Sendable {
     }
 
     private func downscaledPNG(_ image: NSImage) -> Data? {
-        guard let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) else { return nil }
-        let w = rep.pixelsWide, h = rep.pixelsHigh
+        // Bewusst `image.size` statt der rohen Pixelmaße aus `tiffRepresentation` — siehe
+        // PlayerImageStore.downscaledPNG für die ausführliche Begründung (DPI-Metadaten
+        // können `image.size` von den rohen Pixelmaßen abweichen lassen, was sonst nur
+        // einen Teilausschnitt zeichnet und den Rest transparent lässt).
+        let size = image.size
+        let w = size.width, h = size.height
         guard w > 0, h > 0 else { return nil }
-        let scale = min(1, maxSide / CGFloat(max(w, h)))
-        let tw = max(1, Int(CGFloat(w) * scale)), th = max(1, Int(CGFloat(h) * scale))
+        let scale = min(1, maxSide / max(w, h))
+        let tw = max(1, Int(w * scale)), th = max(1, Int(h * scale))
         guard let out = NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: tw, pixelsHigh: th,
             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,

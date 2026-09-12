@@ -36,7 +36,15 @@ public final class PlayerImageStore: @unchecked Sendable {
     /// übergebenen (neuen) Bildversions-UUID ab. Gibt `true` bei Erfolg zurück.
     @discardableResult
     public func store(imageAt source: URL, as id: UUID) -> Bool {
-        guard let img = NSImage(contentsOf: source), let png = downscaledPNG(img) else { return false }
+        guard let img = NSImage(contentsOf: source) else { return false }
+        return store(image: img, as: id)
+    }
+
+    /// Skaliert ein bereits dekodiertes Bild (z. B. Ergebnis des Bildausschnitt-Dialogs)
+    /// herunter und legt es unter der übergebenen Bildversions-UUID ab.
+    @discardableResult
+    public func store(image: NSImage, as id: UUID) -> Bool {
+        guard let png = downscaledPNG(image) else { return false }
         do {
             try png.write(to: url(for: id))
             lock.lock(); memoryCache[id] = NSImage(data: png); lock.unlock()
@@ -45,11 +53,18 @@ public final class PlayerImageStore: @unchecked Sendable {
     }
 
     private func downscaledPNG(_ image: NSImage) -> Data? {
-        guard let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) else { return nil }
-        let w = rep.pixelsWide, h = rep.pixelsHigh
+        // Bewusst `image.size` statt der rohen Pixelmaße aus `tiffRepresentation`:
+        // Fotos mit abweichender DPI-Metadate (z. B. von Handykameras oder nach einem
+        // Export) haben eine `image.size`, die von den rohen Pixelmaßen abweicht — genau
+        // der Koordinatenraum, den `NSImage.draw(in:from:)` für die `from`-Rect erwartet.
+        // Wird stattdessen mit den rohen Pixelmaßen gearbeitet, zeichnet Cocoa nur einen
+        // Teilausschnitt und lässt den Rest der Zielfläche transparent (das genaue Bild,
+        // das zuvor als „nicht richtig angezeigt“ gemeldete Spielerbilder erzeugt hat).
+        let size = image.size
+        let w = size.width, h = size.height
         guard w > 0, h > 0 else { return nil }
-        let scale = min(1, maxSide / CGFloat(max(w, h)))
-        let tw = max(1, Int(CGFloat(w) * scale)), th = max(1, Int(CGFloat(h) * scale))
+        let scale = min(1, maxSide / max(w, h))
+        let tw = max(1, Int(w * scale)), th = max(1, Int(h * scale))
         guard let out = NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: tw, pixelsHigh: th,
             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,

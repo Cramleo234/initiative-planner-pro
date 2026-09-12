@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AppKit
 
 @MainActor
 public final class PlannerStore: ObservableObject {
@@ -287,6 +288,7 @@ public final class PlannerStore: ObservableObject {
                         remaining -= absorbed
                         creature.hitPoints = max(0, creature.hitPoints - remaining)
                     }
+                    updateBloodiedStatus(for: &creature)
                 }
                 if !healing && hadConcentration {
                     let dc = max(10, amount / 2)
@@ -745,6 +747,18 @@ public final class PlannerStore: ObservableObject {
         return newID
     }
 
+    /// Wie `storePlayerImage(at:)`, aber für ein bereits im Bildausschnitt-Dialog
+    /// zugeschnittenes Bild (siehe `PlayerImageCropDialog`).
+    @discardableResult
+    public func storePlayerImage(_ image: NSImage) -> UUID? {
+        let newID = UUID()
+        guard PlayerImageStore.shared.store(image: image, as: newID) else {
+            notice("Bild konnte nicht gespeichert werden — Spieler bleibt ohne Bildänderung", style: "warning")
+            return nil
+        }
+        return newID
+    }
+
     /// Übernimmt eine Spielervorlage als neuen Kämpfer in den aktuellen Kampf. Nicht
     /// gesetzte RK/TP/Ini-Werte erhalten hier sichere interne Startwerte (RK 10, TP 0,
     /// Ini 0) — die Vorlage selbst bleibt davon unberührt und zeigt weiterhin „nicht gesetzt“.
@@ -851,6 +865,20 @@ public final class PlannerStore: ObservableObject {
         for message in endedMessages {
             state.log.append(LogEntry(message: message, kind: "status"))
         }
+    }
+}
+
+/// Setzt/entfernt den Status „Blutig“ automatisch, sobald eine Kreatur höchstens die
+/// Hälfte ihrer maximalen Trefferpunkte hat bzw. wieder darüber geheilt wird — für
+/// Spieler und Monster gleichermaßen.
+private func updateBloodiedStatus(for creature: inout Creature) {
+    guard creature.maxHitPoints > 0 else { return }
+    let isBloodied = creature.hitPoints <= creature.maxHitPoints / 2
+    let hasStatus = creature.statuses.contains { $0.id == "bloodied" }
+    if isBloodied && !hasStatus {
+        creature.statuses.append(StatusInstance(id: "bloodied"))
+    } else if !isBloodied && hasStatus {
+        creature.statuses.removeAll { $0.id == "bloodied" }
     }
 }
 
