@@ -295,10 +295,14 @@ public struct PlannerState: Codable, Equatable {
     public var keepDatabaseOpen: Bool
     public var selectedTheme: String
     public var log: [LogEntry]
+    /// Durchschnittliches Gruppenlevel für die EP-Schwellen der Encounter-Einschätzung.
+    /// Die Gruppengröße wird nicht gepflegt, sondern aus den Spielern im Kampf gezählt.
+    public var partyLevel: Int
 
     // Die Monsterdatenbank ist ab Werk bewusst LEER: Die App wird ohne
     // Regelwerks-Inhalte ausgeliefert; Nutzer importieren ihre eigene Sammlung.
-    public init(players: [Creature] = [], monsters: [Creature] = [], round: Int = 1, activeID: UUID? = nil, monsterDatabase: [MonsterTemplate] = [], playerDatabase: [PlayerTemplate] = [], encounters: [Encounter] = [], statuses: [StatusDefinition] = StatusDefinition.defaults, hpMode: HPMode = .average, keepDatabaseOpen: Bool = true, selectedTheme: String = "glass", log: [LogEntry] = []) {
+    public init(players: [Creature] = [], monsters: [Creature] = [], round: Int = 1, activeID: UUID? = nil, monsterDatabase: [MonsterTemplate] = [], playerDatabase: [PlayerTemplate] = [], encounters: [Encounter] = [], statuses: [StatusDefinition] = StatusDefinition.defaults, hpMode: HPMode = .average, keepDatabaseOpen: Bool = true, selectedTheme: String = "glass", log: [LogEntry] = [], partyLevel: Int = 1) {
+        self.partyLevel = partyLevel
         self.schemaVersion = Self.currentSchemaVersion
         self.players = players
         self.monsters = monsters
@@ -315,7 +319,7 @@ public struct PlannerState: Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case schemaVersion, players, monsters, round, activeID, monsterDatabase, playerDatabase, encounters, statuses, hpMode, keepDatabaseOpen, selectedTheme, log
+        case schemaVersion, players, monsters, round, activeID, monsterDatabase, playerDatabase, encounters, statuses, hpMode, keepDatabaseOpen, selectedTheme, log, partyLevel
     }
 
     /// Migrationspunkt Schema 1 → 2: fehlt `schemaVersion` oder `playerDatabase` (alte Datei),
@@ -336,6 +340,76 @@ public struct PlannerState: Codable, Equatable {
         keepDatabaseOpen = try c.decode(Bool.self, forKey: .keepDatabaseOpen)
         selectedTheme = try c.decode(String.self, forKey: .selectedTheme)
         log = try c.decode([LogEntry].self, forKey: .log)
+        partyLevel = try c.decodeIfPresent(Int.self, forKey: .partyLevel) ?? 1
+    }
+}
+
+/// EP-Einschätzung des aktuellen Kampfes.
+public struct EncounterBudget: Equatable {
+    public var rawXP: Int
+    /// Nach Gegneranzahl gewichtete EP — Grundlage für die Schwierigkeitseinstufung.
+    public var adjustedXP: Int
+    public var partySize: Int
+    public var partyLevel: Int
+    /// Monster ohne EP-Wert (manuell angelegt oder Import ohne EP-Angabe) — ihre
+    /// Bedrohung fehlt in der Summe, deshalb wird die Zahl in der Oberfläche genannt.
+    public var monstersWithoutXP: Int
+    public var thresholds: [Int]        // leicht, mittel, schwer, tödlich
+    public var difficulty: String
+
+    public var isMeaningful: Bool { partySize > 0 && rawXP > 0 }
+}
+
+public extension PlannerState {
+    /// EP-Schwellen pro Charakter nach Level (leicht/mittel/schwer/tödlich).
+    private static let xpThresholds: [[Int]] = [
+        [25, 50, 75, 100], [50, 100, 150, 200], [75, 150, 225, 400], [125, 250, 375, 500],
+        [250, 500, 750, 1100], [300, 600, 900, 1400], [350, 750, 1100, 1700], [450, 900, 1400, 2100],
+        [550, 1100, 1600, 2400], [600, 1200, 1900, 2800], [800, 1600, 2400, 3600], [1000, 2000, 3000, 4500],
+        [1100, 2200, 3400, 5100], [1250, 2500, 3800, 5700], [1400, 2800, 4300, 6400], [1600, 3200, 4800, 7200],
+        [2000, 3900, 5900, 8800], [2100, 4200, 6300, 9500], [2400, 4900, 7300, 10900], [2800, 5700, 8500, 12700]
+    ]
+
+    /// Gewichtung nach Gegneranzahl: viele schwache Gegner sind gefährlicher als ihre
+    /// reine EP-Summe vermuten lässt.
+    private static func encounterMultiplier(monsterCount: Int) -> Double {
+        switch monsterCount {
+        case 0, 1: return 1
+        case 2: return 1.5
+        case 3...6: return 2
+        case 7...10: return 2.5
+        case 11...14: return 3
+        default: return 4
+        }
+    }
+
+    var encounterBudget: EncounterBudget {
+        let level = min(max(partyLevel, 1), Self.xpThresholds.count)
+        let perCharacter = Self.xpThresholds[level - 1]
+        let partySize = players.count
+        let thresholds = perCharacter.map { $0 * partySize }
+
+        var rawXP = 0
+        var withoutXP = 0
+        for monster in monsters {
+            let xp = monster.sourceMonsterID
+                .flatMap { id in monsterDatabase.first { $0.id == id } }?
+                .xpValue ?? 0
+            if xp > 0 { rawXP += xp } else { withoutXP += 1 }
+        }
+        let adjusted = Int((Double(rawXP) * Self.encounterMultiplier(monsterCount: monsters.count)).rounded())
+
+        let difficulty: String
+        if partySize == 0 || rawXP == 0 { difficulty = "—" }
+        else if adjusted >= thresholds[3] { difficulty = "Tödlich" }
+        else if adjusted >= thresholds[2] { difficulty = "Schwer" }
+        else if adjusted >= thresholds[1] { difficulty = "Mittel" }
+        else if adjusted >= thresholds[0] { difficulty = "Leicht" }
+        else { difficulty = "Trivial" }
+
+        return EncounterBudget(rawXP: rawXP, adjustedXP: adjusted, partySize: partySize,
+                                partyLevel: level, monstersWithoutXP: withoutXP,
+                                thresholds: thresholds, difficulty: difficulty)
     }
 }
 
@@ -385,6 +459,55 @@ public extension StatusDefinition {
                 "Vorteil bei Stärkewürfen und Stärke-Rettungswürfen.",
                 "Resistenz gegen Wucht-, Hieb- und Stichschaden.",
                 "Endet u. a., wenn die Kreatur eine Minute lang weder angreift noch Schaden erleidet."
+            ], isOfficial: true),
+            // Klassenfähigkeiten und häufige Zaubereffekte — bewusst in eigenen Worten
+            // zusammengefasst statt aus Regelwerken übernommen.
+            StatusDefinition(id: "reckless", label: "Rücksichtslos", short: "Rücks", category: "physical", priority: 3, polarity: .bad, description: "Die Kreatur greift ohne Rücksicht auf die eigene Deckung an.", effects: [
+                "Eigene Nahkampfangriffe mit Stärke sind im Vorteil.",
+                "Angriffswürfe gegen sie sind bis zu ihrem nächsten Zug ebenfalls im Vorteil."
+            ], isOfficial: true),
+            StatusDefinition(id: "wildshape", label: "Wildgestalt", short: "Wild", category: "good", priority: 3, polarity: .good, description: "Die Kreatur hat die Gestalt eines Tieres angenommen.", effects: [
+                "Werte der angenommenen Gestalt verwenden; eigene Rettungswürfe bleiben, wenn sie besser sind.",
+                "Bei 0 Trefferpunkten kehrt sie in ihre normale Gestalt zurück."
+            ], isOfficial: true),
+            StatusDefinition(id: "hasted", label: "Gehastet", short: "Hast", category: "good", priority: 3, polarity: .good, description: "Ein Effekt beschleunigt die Kreatur deutlich.", effects: [
+                "Bewegungsrate verdoppelt, erhöhte Rüstungsklasse.",
+                "Vorteil bei Geschicklichkeitsrettungswürfen.",
+                "Eine zusätzliche, eingeschränkte Aktion pro Zug.",
+                "Läuft der Effekt aus, ist die Kreatur eine Runde lang handlungsunfähig."
+            ], isOfficial: true),
+            StatusDefinition(id: "heroism", label: "Heldenmut", short: "Held", category: "good", priority: 2, polarity: .good, description: "Ein aufmunternder Effekt verdrängt Furcht und stärkt die Kreatur.", effects: [
+                "Immun gegen Verängstigt.",
+                "Zu Beginn jedes Zuges neue temporäre Trefferpunkte."
+            ], isOfficial: true),
+            StatusDefinition(id: "shielded", label: "Geschützt", short: "Schutz", category: "good", priority: 2, polarity: .good, description: "Ein Schutzeffekt erhöht die Rüstungsklasse.", effects: [
+                "Typische Erinnerung: +2 RK, solange der Effekt anhält."
+            ], isOfficial: true),
+            StatusDefinition(id: "flying", label: "Fliegend", short: "Flug", category: "movement", priority: 3, polarity: .good, description: "Die Kreatur befindet sich in der Luft.", effects: [
+                "Bodengebundene Nahkampfangriffe erreichen sie nur in Reichweite.",
+                "Verliert sie die Flugfähigkeit, stürzt sie ab."
+            ], isOfficial: true),
+            StatusDefinition(id: "slowed", label: "Verlangsamt", short: "Verl", category: "movement", priority: 4, polarity: .bad, description: "Ein Effekt drosselt Tempo und Handlungen der Kreatur.", effects: [
+                "Bewegungsrate halbiert, geringere Rüstungsklasse und Geschicklichkeitsrettungswürfe.",
+                "Keine Reaktionen; pro Zug nur Aktion oder Bonusaktion."
+            ], isOfficial: true),
+            StatusDefinition(id: "baned", label: "Verflucht", short: "Fluch", category: "mental", priority: 3, polarity: .bad, description: "Ein hinderlicher Effekt schwächt die Würfe der Kreatur.", effects: [
+                "Typische Erinnerung: Abzug auf Angriffs- und Rettungswürfe, solange der Effekt gilt."
+            ], isOfficial: true),
+            StatusDefinition(id: "marked", label: "Markiert", short: "Mark", category: "physical", priority: 2, polarity: .bad, description: "Die Kreatur ist als Ziel markiert (z. B. Jägermal oder ein Fluch).", effects: [
+                "Zusatzschaden bei Treffern durch den markierenden Charakter.",
+                "Häufig mit Vorteil beim Aufspüren des Ziels verbunden."
+            ], isOfficial: true),
+            StatusDefinition(id: "outlined", label: "Umrissen", short: "Umr", category: "physical", priority: 4, polarity: .bad, description: "Die Kreatur ist hell umrissen und dadurch nicht zu übersehen (z. B. Feenfeuer).", effects: [
+                "Angriffswürfe gegen sie sind im Vorteil.",
+                "Sie profitiert nicht von Unsichtbarkeit oder Verstecken."
+            ], isOfficial: true),
+            StatusDefinition(id: "silenced", label: "Stumm", short: "Stumm", category: "mental", priority: 3, polarity: .bad, description: "Die Kreatur kann keine hörbaren Laute erzeugen.", effects: [
+                "Zauber mit Verbalkomponente lassen sich nicht wirken."
+            ], isOfficial: true),
+            StatusDefinition(id: "burning", label: "Brennend", short: "Brand", category: "physical", priority: 3, polarity: .bad, description: "Die Kreatur brennt und erleidet fortlaufend Schaden.", effects: [
+                "Zu Beginn jedes Zuges Schaden gemäß Effektquelle.",
+                "Endet, wenn die Flammen gelöscht werden — Aufwand je nach Quelle."
             ], isOfficial: true),
             StatusDefinition(id: "inspired", label: "Inspiriert", short: "Ins", category: "good", priority: 1, polarity: .good, description: "Hat Inspiration, Bardeninspiration oder einen vergleichbaren Bonus.", effects: [
                 "Als Marker für einen später einsetzbaren Bonus gedacht; genaue Wirkung hängt von der Quelle ab."

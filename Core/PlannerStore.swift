@@ -203,6 +203,19 @@ public final class PlannerStore: ObservableObject {
         }
     }
 
+    /// Benennt einen Kämpfer nur im laufenden Kampf/Encounter um („Aaskriecher links“).
+    /// Die Monsterdatenbank bleibt unberührt: Kampf-Kämpfer sind eigenständige Kopien,
+    /// die Vorlage wird nur über `sourceMonsterID` referenziert, nie über den Namen.
+    public func renameCreature(_ id: UUID, to newName: String) {
+        let clean = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let creature = state.allCreatures.first(where: { $0.id == id }) else { return }
+        guard !clean.isEmpty else { notice("Name darf nicht leer sein", style: "warning"); return }
+        guard clean != creature.name else { return }
+        commit("\(creature.name) heißt im Kampf jetzt \(clean)", style: "info") { state in
+            mutateCreature(id, in: &state) { $0.name = clean }
+        }
+    }
+
     public func setActive(_ id: UUID) {
         guard let creature = state.allCreatures.first(where: { $0.id == id }) else { return }
         commit("\(creature.name) ist aktiv", style: "info") { state in
@@ -223,15 +236,39 @@ public final class PlannerStore: ObservableObject {
         }
     }
 
-    public func rollInitiative(_ id: UUID) {
+    /// Wurfmodus für Initiative — Vorteil/Nachteil werden als zwei W20 gewürfelt,
+    /// von denen der höhere bzw. niedrigere zählt (der Bonus gilt jeweils einmal).
+    public enum RollMode: String, CaseIterable, Identifiable {
+        case normal, advantage, disadvantage
+        public var id: String { rawValue }
+        public var label: String {
+            switch self {
+            case .normal: return "Normal"
+            case .advantage: return "Mit Vorteil"
+            case .disadvantage: return "Mit Nachteil"
+            }
+        }
+    }
+
+    public func rollInitiative(_ id: UUID, mode: RollMode = .normal) {
         guard let creature = state.allCreatures.first(where: { $0.id == id }) else { return }
         do {
-            let result = try DiceRoller.roll("d20\(creature.initiativeBonus >= 0 ? "+" : "")\(creature.initiativeBonus)")
-            commit("\(creature.name) würfelt Initiative: \(result.total)", style: "info") { state in
-                mutateCreature(id, in: &state) { $0.currentInitiative = result.total }
+            let (total, detail) = try rollD20(bonus: creature.initiativeBonus, mode: mode)
+            commit("\(creature.name) würfelt Initiative: \(total) (\(detail))", style: "info") { state in
+                mutateCreature(id, in: &state) { $0.currentInitiative = total }
                 if state.activeID == nil { state.activeID = id }
             }
         } catch { notice(error.localizedDescription, style: "error") }
+    }
+
+    private func rollD20(bonus: Int, mode: RollMode) throws -> (total: Int, detail: String) {
+        let expression = "d20\(bonus >= 0 ? "+" : "")\(bonus)"
+        let first = try DiceRoller.roll(expression)
+        guard mode != .normal else { return (first.total, first.detail) }
+        let second = try DiceRoller.roll(expression)
+        let take = mode == .advantage ? max(first.total, second.total) : min(first.total, second.total)
+        let dropped = take == first.total ? second.total : first.total
+        return (take, "\(mode == .advantage ? "Vorteil" : "Nachteil"): \(take), verworfen \(dropped)")
     }
 
     public func rollAllMonsterInitiative() {
@@ -446,6 +483,14 @@ public final class PlannerStore: ObservableObject {
             for (position, id) in group.enumerated() {
                 mutateCreature(id, in: &state) { $0.tieBreak = position }
             }
+        }
+    }
+
+    public func setPartyLevel(_ level: Int) {
+        let clamped = min(max(level, 1), 20)
+        guard clamped != state.partyLevel else { return }
+        commit(nil) { state in
+            state.partyLevel = clamped
         }
     }
 

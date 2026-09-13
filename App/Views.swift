@@ -126,6 +126,35 @@ func statusCategoryColor(_ category: String, polarity: StatusPolarity) -> Color 
     }
 }
 
+/// Hebt Würfelterme („1W8+2", „2d6") im Statblock-Text fett hervor: am Tisch wird
+/// physisch gewürfelt, und beim Vorlesen soll sofort ins Auge springen, was zu werfen ist.
+/// Der Lookbehind verhindert Treffer mitten in Wörtern; Angriffsboni („+4") und
+/// Schwierigkeitsgrade („SG 12") enthalten keine Würfel und bleiben normal gesetzt.
+func diceEmphasized(_ text: String) -> AttributedString {
+    var attributed = AttributedString(text)
+    let pattern = #"(?<![\p{L}])\d*\s?[WwDd]\s?\d+(?:\s?[+-]\s?\d+)?"#
+    guard let regex = try? NSRegularExpression(pattern: pattern) else { return attributed }
+    let full = NSRange(text.startIndex..<text.endIndex, in: text)
+    for match in regex.matches(in: text, range: full) {
+        guard let range = Range(match.range, in: text),
+              let attributedRange = Range(range, in: attributed) else { continue }
+        attributed[attributedRange].inlinePresentationIntent = .stronglyEmphasized
+    }
+    return attributed
+}
+
+/// Farbcode der Log-Einträge nach Typ (`LogEntry.kind`) — dieselbe Palette wie bei den
+/// Status-Kategorien, damit Warnungen/Würfe im laufenden Kampf sofort ins Auge fallen.
+func logKindColor(_ kind: String) -> Color {
+    switch kind {
+    case "warning", "error": return Color(hex: 0xc34956)
+    case "success": return Color(hex: 0x4fac78)
+    case "roll": return Color(hex: 0x8b5cf6)
+    case "status": return Color(hex: 0xf97316)
+    default: return Color.secondary.opacity(0.35)
+    }
+}
+
 // MARK: - Haupt-Layout
 
 struct ContentView: View {
@@ -559,6 +588,7 @@ struct SummaryCard: View {
                     StatTile(title: "Konz.", value: "\(store.state.allCreatures.filter { $0.statuses.contains { $0.id == "concentration" } }.count)")
                     StatTile(title: "Besiegt", value: "\(store.state.monsters.filter(\.isDefeated).count)")
                 }
+                EncounterBudgetView()
                 HStack {
                     Button {
                         store.removeDefeatedMonsters()
@@ -572,6 +602,61 @@ struct SummaryCard: View {
             }
         }
         .frame(width: 360)
+    }
+}
+
+/// EP-Einschätzung des laufenden Kampfes. Die Gruppengröße kommt aus den Spielern im
+/// Kampf, einzustellen ist nur das Gruppenlevel.
+struct EncounterBudgetView: View {
+    @EnvironmentObject private var store: PlannerStore
+
+    private var difficultyColor: Color {
+        switch store.state.encounterBudget.difficulty {
+        case "Tödlich": return Color(hex: 0xc34956)
+        case "Schwer": return Color(hex: 0xf97316)
+        case "Mittel": return Color(hex: 0xd9a441)
+        case "Leicht", "Trivial": return Color(hex: 0x4fac78)
+        default: return .secondary
+        }
+    }
+
+    var body: some View {
+        let budget = store.state.encounterBudget
+        VStack(alignment: .leading, spacing: 8) {
+            Divider().opacity(0.2)
+            HStack {
+                Text("Gruppenlevel")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Stepper("\(budget.partyLevel)", value: Binding(
+                    get: { store.state.partyLevel },
+                    set: { store.setPartyLevel($0) }), in: 1...20)
+                    .fixedSize()
+                Spacer()
+                Text(budget.difficulty)
+                    .font(.system(size: 11, weight: .heavy))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 3)
+                    .background(difficultyColor.opacity(0.18), in: Capsule())
+                    .overlay(Capsule().strokeBorder(difficultyColor.opacity(0.55), lineWidth: 1))
+            }
+            if budget.isMeaningful {
+                Text("EP \(budget.rawXP.formatted()) · gewichtet \(budget.adjustedXP.formatted()) · Schwellen \(budget.thresholds.map { $0.formatted() }.joined(separator: " / "))")
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .help("Schwellen für \(budget.partySize) Spieler auf Level \(budget.partyLevel): leicht / mittel / schwer / tödlich")
+            } else {
+                Text(store.state.players.isEmpty ? "Spieler hinzufügen für die EP-Einschätzung"
+                                                 : "Keine Monster mit EP-Werten im Kampf")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+            if budget.monstersWithoutXP > 0 {
+                Text("\(budget.monstersWithoutXP) Monster ohne EP-Wert nicht mitgezählt")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color(hex: 0xf97316))
+            }
+        }
     }
 }
 
@@ -606,6 +691,18 @@ struct CreatureCard: View {
     @State private var temp = ""
     @State private var initiative = ""
     @State private var showStatblock = false
+    @State private var renaming = false
+    @State private var draftName = ""
+
+    private func startRename() {
+        draftName = creature.name
+        renaming = true
+    }
+
+    private func commitRename() {
+        store.renameCreature(creature.id, to: draftName)
+        renaming = false
+    }
 
     var activeStatuses: [(def: StatusDefinition, instance: StatusInstance)] {
         creature.statuses
@@ -642,13 +739,30 @@ struct CreatureCard: View {
                         .overlay(Circle().strokeBorder(theme.cardBorder, lineWidth: 1))
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(creature.kind.emoji) \(creature.name)")
-                        .font(.system(size: 16, weight: .bold))
+                    if renaming {
+                        TextField("Name", text: $draftName)
+                            .font(.system(size: 16, weight: .bold))
+                            .textFieldStyle(.roundedBorder)
+                            .onSubmit { commitRename() }
+                            .onExitCommand { renaming = false }
+                    } else {
+                        Text("\(creature.kind.emoji) \(creature.name)")
+                            .font(.system(size: 16, weight: .bold))
+                            .help("Doppelklick: nur für diesen Kampf umbenennen")
+                            .onTapGesture(count: 2) { startRename() }
+                    }
                     Text("RK \(creature.armorClass) · Ini \(creature.initiativeBonus >= 0 ? "+" : "")\(creature.initiativeBonus)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                if renaming {
+                    Button { commitRename() } label: { Image(systemName: "checkmark") }
+                        .help("Namen übernehmen")
+                } else {
+                    Button { startRename() } label: { Image(systemName: "pencil") }
+                        .help("Nur im Kampf umbenennen — die Monsterdatenbank bleibt unverändert")
+                }
                 Button { store.setActive(creature.id) } label: { Image(systemName: "scope") }
                     .help("Aktiv setzen")
                 Button { store.duplicateCreature(creature.id) } label: { Image(systemName: "plus.square.on.square") }
@@ -701,48 +815,15 @@ struct CreatureCard: View {
                 TextField("Initiative", text: $initiative)
                     .onSubmit { store.setInitiative(creature.id, initiative: Int(initiative)) }
                 Button("🎲") { store.rollInitiative(creature.id) }
-            }
-            HStack(spacing: 6) {
-                Button {
-                    selectedStatusCreature = creature
-                } label: {
-                    Label("Status", systemImage: "sparkles")
-                }
-                .tint(theme.tertiary)
-                ForEach(activeStatuses.prefix(5), id: \.def.id) { entry in
-                    let status = entry.def
-                    let color = statusCategoryColor(status.category, polarity: status.polarity)
-                    // Chip klicken = Status entfernen (per ⌘Z rückholbar); Rechtsklick zeigt Regeln.
-                    Button {
-                        store.toggleStatus(status.id, for: creature.id)
-                    } label: {
-                        HStack(spacing: 3) {
-                            Text(status.short + (entry.instance.duration.map { " · \($0)R" } ?? ""))
-                                .font(.system(size: 10.5, weight: .bold))
-                            Image(systemName: "xmark")
-                                .font(.system(size: 7, weight: .bold))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(color.opacity(0.20), in: Capsule())
-                        .overlay(Capsule().strokeBorder(color.opacity(0.55), lineWidth: 1))
-                        .contentShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .help("\(statusRulesTooltip(status))\n\nKlicken zum Entfernen")
+                    .help("Initiative würfeln — Rechtsklick für Vorteil/Nachteil")
                     .contextMenu {
-                        Button("„\(status.label)“ entfernen") {
-                            store.toggleStatus(status.id, for: creature.id)
-                        }
-                        Divider()
-                        Text(status.description)
-                        ForEach(status.effects, id: \.self) { effect in
-                            Text("• \(effect)")
+                        ForEach(PlannerStore.RollMode.allCases) { mode in
+                            Button(mode.label) { store.rollInitiative(creature.id, mode: mode) }
                         }
                     }
-                }
             }
+            CreatureStatusRow(creature: creature, statuses: activeStatuses,
+                              selectedStatusCreature: $selectedStatusCreature)
             if creature.isDefeated {
                 if creature.kind == .player {
                     DeathSaveView(creature: creature)
@@ -778,6 +859,78 @@ struct CreatureCard: View {
         .shadow(color: isActive ? theme.accent.opacity(0.25) : .clear, radius: 16, y: 6)
         .opacity(creature.isDefeated ? 0.75 : 1)
         .onAppear { initiative = creature.currentInitiative.map(String.init) ?? "" }
+        // Ohne diesen Abgleich zeigt das Feld nach „Monster-Ini würfeln“ weiter den
+        // alten Wert — Leiste und Ring aktualisieren sich, die offene Karte nicht.
+        .onChange(of: creature.currentInitiative) { _, new in
+            initiative = new.map(String.init) ?? ""
+        }
+    }
+}
+
+/// Status-Zeile einer Kampfkarte: „Status“-Knopf, Überlaufzähler und die Chips der
+/// wichtigsten aktiven Status. Bewusst eine eigene View — im Rumpf von `CreatureCard`
+/// lief der Swift-Type-Checker bei dieser Verschachtelung in die Zeitüberschreitung.
+struct CreatureStatusRow: View {
+    @EnvironmentObject private var store: PlannerStore
+    var creature: Creature
+    var statuses: [(def: StatusDefinition, instance: StatusInstance)]
+    @Binding var selectedStatusCreature: Creature?
+
+    private let visibleLimit = 5
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button {
+                selectedStatusCreature = creature
+            } label: {
+                Label("Status", systemImage: "sparkles")
+            }
+            .tint(store.theme.tertiary)
+            let hidden = statuses.count - visibleLimit
+            if hidden > 0 {
+                Text("+\(hidden)")
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .help("\(hidden) weitere Status — über „Status“ vollständig sichtbar")
+            }
+            ForEach(statuses.prefix(visibleLimit), id: \.def.id) { entry in
+                chip(for: entry.def, instance: entry.instance)
+            }
+        }
+    }
+
+    /// Chip klicken = Status entfernen (per ⌘Z rückholbar); Rechtsklick zeigt die Regeln.
+    @ViewBuilder
+    private func chip(for status: StatusDefinition, instance: StatusInstance) -> some View {
+        let color = statusCategoryColor(status.category, polarity: status.polarity)
+        Button {
+            store.toggleStatus(status.id, for: creature.id)
+        } label: {
+            HStack(spacing: 3) {
+                Text(status.short + (instance.duration.map { " · \($0)R" } ?? ""))
+                    .font(.system(size: 10.5, weight: .bold))
+                Image(systemName: "xmark")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.20), in: Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.55), lineWidth: 1))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .help("\(statusRulesTooltip(status))\n\nKlicken zum Entfernen")
+        .contextMenu {
+            Button("„\(status.label)“ entfernen") {
+                store.toggleStatus(status.id, for: creature.id)
+            }
+            Divider()
+            Text(status.description)
+            ForEach(status.effects, id: \.self) { effect in
+                Text("• \(effect)")
+            }
+        }
     }
 }
 
@@ -1410,7 +1563,7 @@ struct StatBlockSection: View {
                     VStack(alignment: .leading, spacing: 1.5) {
                         Text(item.name)
                             .font(.system(size: 11.5, weight: .bold))
-                        Text(item.text)
+                        Text(diceEmphasized(item.text))
                             .font(.system(size: 10.5))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1503,6 +1656,11 @@ struct LogView: View {
                             Text(entry.date.formatted(date: .omitted, time: .shortened))
                                 .monospacedDigit()
                                 .foregroundStyle(store.theme.accent)
+                            // Farbiger Balken nach Eintragstyp — Schaden/Warnungen sind im
+                            // laufenden Kampf sonst nicht vom Rauschen zu unterscheiden.
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .fill(logKindColor(entry.kind))
+                                .frame(width: 3)
                             Text(entry.message)
                             Spacer()
                         }

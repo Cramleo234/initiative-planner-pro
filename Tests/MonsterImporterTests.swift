@@ -227,6 +227,55 @@ final class CombatLogicTests: XCTestCase {
         XCTAssertFalse(store.state.monsters[0].statuses.contains { $0.id == "bloodied" }, "Wieder über der Hälfte (13/20) — Marker automatisch entfernt")
     }
 
+    func testEncounterBudgetWeightsMonsterCountAndCountsOnlyPlayers() {
+        let store = makeStore()
+        var statblock = StatBlock()
+        statblock.xp = "450"
+        let template = MonsterTemplate(id: "gnoll", name: "Gnoll", armorClass: 15, hpAverage: 22,
+                                        hpDice: "5d8", challengeRating: "1/2", statblock: statblock)
+        store.saveMonsterTemplate(template)
+        store.addCreature(name: "Held", kind: .player, armorClass: 16, hpExpression: "30", initiativeBonus: 0, initiative: nil)
+        store.addCreature(name: "Heldin", kind: .player, armorClass: 15, hpExpression: "28", initiativeBonus: 0, initiative: nil)
+        store.setPartyLevel(3)
+        store.addMonsterFromDatabase(template, quantity: 4, mode: .average)
+
+        let budget = store.state.encounterBudget
+        XCTAssertEqual(budget.partySize, 2, "Nur Spieler zählen als Gruppengröße")
+        XCTAssertEqual(budget.rawXP, 1800, "4 × 450 EP")
+        XCTAssertEqual(budget.adjustedXP, 3600, "3–6 Gegner werden doppelt gewichtet")
+        // Level 3, zwei Spieler → Schwellen 150 / 300 / 450 / 800
+        XCTAssertEqual(budget.thresholds, [150, 300, 450, 800])
+        XCTAssertEqual(budget.difficulty, "Tödlich")
+        XCTAssertEqual(budget.monstersWithoutXP, 0)
+    }
+
+    func testEncounterBudgetReportsMonstersWithoutXP() {
+        let store = makeStore()
+        store.addCreature(name: "Held", kind: .player, armorClass: 16, hpExpression: "30", initiativeBonus: 0, initiative: nil)
+        store.addCreature(name: "Eigenbau", kind: .monster, armorClass: 12, hpExpression: "10", initiativeBonus: 0, initiative: nil)
+
+        let budget = store.state.encounterBudget
+        XCTAssertEqual(budget.monstersWithoutXP, 1, "Manuell angelegte Monster haben keinen EP-Wert")
+        XCTAssertEqual(budget.rawXP, 0)
+        XCTAssertEqual(budget.difficulty, "—", "Ohne EP-Werte wird keine Schwierigkeit behauptet")
+    }
+
+    func testRenamingCombatantLeavesMonsterDatabaseUntouched() {
+        let store = makeStore()
+        let template = MonsterTemplate(id: "ork", name: "Ork", armorClass: 13, hpAverage: 15, hpDice: "2d8+6", challengeRating: "1/2")
+        store.saveMonsterTemplate(template)
+        store.addMonsterFromDatabase(template, quantity: 1, mode: .average)
+        let id = store.state.monsters[0].id
+
+        store.renameCreature(id, to: "Ork am Tor")
+
+        XCTAssertEqual(store.state.monsters[0].name, "Ork am Tor")
+        XCTAssertEqual(store.state.monsterDatabase.first { $0.id == "ork" }?.name, "Ork",
+                       "Die Vorlage in der Datenbank darf durch das Umbenennen im Kampf nicht verändert werden")
+        XCTAssertEqual(store.state.monsters[0].sourceMonsterID, "ork",
+                       "Die Verknüpfung zur Vorlage (und damit der Statblock) muss erhalten bleiben")
+    }
+
     func testPlayerAtHalfHPAlsoAutomaticallyGetsBloodied() {
         let store = makeStore()
         store.addCreature(name: "Held", kind: .player, armorClass: 10, hpExpression: "20", initiativeBonus: 0, initiative: nil)
